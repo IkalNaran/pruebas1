@@ -1,16 +1,24 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #fafafa;
-    color: #333;
-    margin: 0;
-    padding: 0;
+:root{
+    --bg:#0b1220;
+    --panel:#071126;
+    --muted:#9aa6b2;
+    --accent:#16a34a;
+    --accent-2:#06b6d4;
+    --card:#0f1720;
+    --card-border:rgba(255,255,255,0.04);
 }
+html,body{height:100%}
+body{
+    font-family: Inter, system-ui, -apple-system, Arial, sans-serif;
+    background: linear-gradient(180deg,var(--bg), #06101a);
+    color: #e6eef6;
+    margin:0;padding:0;
+}
+header, footer{background:transparent;color:var(--muted);padding:12px 18px}
+header h1{margin:0;font-size:1.1rem;color:#fff}
+nav a{color:var(--muted);text-decoration:none;margin:0 10px}
 
-header, footer {
-    background: #004b8d;
-    color: white;
-    padding: 10px;
-}
+main{padding:12px}
 
 nav a {
     color: white;
@@ -23,3 +31,34 @@ nav a {
     border-radius: 10px;
     margin-top: 10px;
 }
+/* Dashboard specific */
+.dashboard-container{max-width:1200px;margin:8px auto}
+.status-cards{display:flex;gap:12px}
+.card{background:var(--card);color:var(--muted);padding:12px;border-radius:10px;flex:1;border:1px solid var(--card-border)}
+.card-title{font-size:0.85rem;color:var(--muted)}
+.card-value{font-size:1.4rem;margin-top:6px;color:#fff}
+
+.main-area{display:flex;gap:12px}
+.map{flex:1;height:560px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+.map-large{height:720px}
+.right-panel{width:320px;background:var(--panel);color:var(--muted);padding:12px;border-radius:8px}
+.bottom-panel{display:flex;gap:12px;margin-top:12px}
+.chart-card{flex:1;background:var(--panel);padding:12px;border-radius:8px}
+.table-card{width:360px;background:var(--panel);padding:12px;border-radius:8px}
+
+.events{max-height:240px;overflow:auto}
+.flights-table{width:100%;border-collapse:collapse}
+.flights-table th{ text-align:left;padding:6px;color:var(--muted);font-size:0.85rem}
+.flights-table td{padding:6px;border-top:1px solid rgba(255,255,255,0.03)}
+
+/* Filters */
+.filters label{display:block;font-size:0.82rem;color:var(--muted);margin-top:8px}
+.filters select,.filters input{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.02);color:#fff}
+.filters button{background:var(--accent);border:none;color:#031018;padding:8px 10px;border-radius:6px;cursor:pointer}
+.filters button:nth-child(2){background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+
+/* plane div icon tweaks */
+.plane-div-icon{display:flex;align-items:center;justify-content:center}
+.plane-div-icon svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))}
+
+@media (max-width:900px){.main-area{flex-direction:column}.right-panel{width:100%}.map{height:420px}}
