@@ -1,5 +1,5 @@
-// Crear mapa centrado en Europa
-const map = L.map('map').setView([48.5, 9.0], 5);
+// Crear mapa centrado en la Ciudad de México
+const map = L.map('map').setView([19.4, -99.1], 8);
 
 // Capa base (OpenStreetMap)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -11,15 +11,21 @@ let aircraftMarkers = {};
 
 async function fetchFlights() {
     try {
-        const lamin = 35;
-        const lamax = 55;
-        const lomin = -10;
-        const lomax = 20;
+        // Coordenadas aproximadas de CDMX y alrededores
+        const lamin = 18.8;
+        const lamax = 20.2;
+        const lomin = -100.2;
+        const lomax = -98.6;
 
         const response = await fetch(`/api/opensky?lamin=${lamin}&lomin=${lomin}&lamax=${lamax}&lomax=${lomax}`);
         const data = await response.json();
 
-        if (!data.states) return;
+        console.log("Vuelos recibidos:", data.states?.length || 0);
+
+        if (!data.states || data.states.length === 0) {
+            console.warn("Sin vuelos detectados en esta región.");
+            return;
+        }
 
         // Eliminar marcadores antiguos que ya no están
         for (const icao24 in aircraftMarkers) {
@@ -62,8 +68,6 @@ async function fetchFlights() {
     } catch (err) {
         console.error("Error al obtener datos de vuelos:", err);
     }
-    console.log("Vuelos recibidos:", data.states?.length || 0);
-
 }
 
 // Actualiza el mapa cada 10 segundos
