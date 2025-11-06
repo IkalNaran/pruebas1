@@ -6,14 +6,9 @@ python3 -m venv env
 
 source /venv/bin/activate
 
-- Crear un archivo .env con:
+- Modificar su archivo config.py
 
-SECRET_KEY=tu-clave-secreta-muy-segura-aqui
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=flask_app
-DB_USER=postgres
-DB_PASSWORD=tu_password
+'postgresql+psycopg2://admin:3132@localhost:5432/zabbix_flights'
 
 - Instalar dependencias:
 
