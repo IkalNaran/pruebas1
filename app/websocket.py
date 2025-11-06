@@ -1,5 +1,6 @@
 import time
-from threading import Event
+import math
+from threading import Event, Thread
 from app.opensky_client import get_all_states
 from app import socketio
 
@@ -10,6 +11,8 @@ LAMAX = 19.80
 LOMAX = -98.90
 
 stop_event = Event()
+_current_flights = {}
+_last_snapshot_ts = 0.0
 
 def _parse_states(data):
     """Parse OpenSky /states/all response into a list of flight dicts."""
@@ -82,11 +85,21 @@ def _poll_opensky(interval_seconds=15):
             continue
 
         flights = _parse_states(data)
+        # Mark fresh snapshot flights as not estimated
+        for f in flights:
+            f['estimated'] = False
+        # store snapshot for predictive movement
+        global _current_flights, _last_snapshot_ts
+        _current_flights = {f['icao24']: f for f in flights if f.get('icao24')}
+        _last_snapshot_ts = time.time()
         try:
             # Emit a snapshot (list) — dashboard will diff/create markers
             socketio.emit('flights_snapshot', flights, namespace='/')
             # status ok
             socketio.emit('status_update', {'api': 'ok'}, namespace='/')
+            # Optionally emit individual updates (limited) to keep markers moving per-flight
+            for f in flights[:80]:
+                socketio.emit('flight_update', f, namespace='/')
         except Exception:
             pass
 
@@ -117,3 +130,62 @@ def start_background_tasks(app=None):
         import threading
         t = threading.Thread(target=_poll_opensky, daemon=True)
         t.start()
+
+    # Start predictive movement emitter (dead-reckoning) to animate markers between snapshots.
+    def _predictive_motion_loop():
+        # run until stop
+        last_emit = time.time()
+        while not stop_event.is_set():
+            now = time.time()
+            dt = now - last_emit
+            last_emit = now
+            # Only proceed if we have a recent snapshot (within 90s)
+            if now - _last_snapshot_ts > 90:
+                time.sleep(1)
+                continue
+            updated = []
+            for icao, f in list(_current_flights.items()):
+                try:
+                    speed = f.get('speed')  # m/s
+                    heading = f.get('heading')  # degrees (true_track)
+                    lat = f.get('lat')
+                    lon = f.get('lon')
+                    if speed is None or heading is None or lat is None or lon is None:
+                        continue
+                    # Clamp unrealistic speeds
+                    if speed <= 0 or speed > 350:  # ignore if stationary or unrealistic for snapshot
+                        continue
+                    # Dead-reckoning simple equirectangular approximation
+                    distance = speed * dt  # meters traveled since last iteration
+                    # Convert heading degrees to radians
+                    rad = math.radians(heading)
+                    # Approx degree conversions
+                    dlat = (distance * math.cos(rad)) / 111320.0
+                    # prevent division by zero at poles (not relevant here)
+                    dlon = (distance * math.sin(rad)) / (111320.0 * math.cos(math.radians(lat)))
+                    new_lat = lat + dlat
+                    new_lon = lon + dlon
+                    # Keep inside an expanded bounding box (slightly larger than query area)
+                    if new_lat < LAMIN - 0.5 or new_lat > LAMAX + 0.5 or new_lon < LOMIN - 0.5 or new_lon > LOMAX + 0.5:
+                        continue
+                    # Update stored flight
+                    f['lat'] = new_lat
+                    f['lon'] = new_lon
+                    f['last_seen'] = int(now)
+                    f['estimated'] = True
+                    updated.append(f)
+                except Exception:
+                    continue
+            # Emit per-flight updates (limit to 120 to avoid flooding)
+            if updated:
+                try:
+                    for uf in updated[:120]:
+                        socketio.emit('flight_update', uf, namespace='/')
+                except Exception:
+                    pass
+            time.sleep(1)
+
+    try:
+        socketio.start_background_task(_predictive_motion_loop)
+    except Exception:
+        Thread(target=_predictive_motion_loop, daemon=True).start()

@@ -1,3 +1,4 @@
+import os
 import requests
 
 BASE_URL = "https://opensky-network.org/api"
@@ -18,7 +19,14 @@ def get_all_states(lamin=None, lomin=None, lamax=None, lomax=None):
         })
 
     try:
-        response = requests.get(url, params=params, timeout=10)
+        # Optional Basic Auth to increase rate limits
+        auth = None
+        user = os.environ.get('OPEN_SKY_USER')
+        pwd = os.environ.get('OPEN_SKY_PASS')
+        if user and pwd:
+            auth = (user, pwd)
+        headers = {'User-Agent': 'ZabbixFlights/1.0'}
+        response = requests.get(url, params=params, timeout=10, auth=auth, headers=headers)
         response.raise_for_status()
         data = response.json()
         return data
