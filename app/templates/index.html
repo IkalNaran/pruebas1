@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title> {% block title %} {% endblock %}  </title>
 </head>
 <body>
     <h1>Hola x22222</h1>
+    <main>
+        {% block content %}
+        <!-- Aquí va el contenido específico de cada página -->
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2025 Mi sitio web</p>
+    </footer>
 </body>
 </html>
