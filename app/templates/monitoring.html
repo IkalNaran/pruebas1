@@ -3,6 +3,13 @@
 {% block content %}
 <!-- Dashboard layout: navbar cards, large map, bottom panel with charts and events -->
 <div class="dashboard-container">
+	<div class="system-status">
+		<div id="api-indicator" class="status-indicator status-unknown">
+			<span class="dot"></span>
+			<span id="api-indicator-text">API OpenSky: desconocido</span>
+			<span id="api-last-checked" class="last-checked"></span>
+		</div>
+	</div>
 	<section class="top-row">
 		<div class="status-cards">
 			<div class="card" id="card-api">

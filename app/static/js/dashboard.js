@@ -100,7 +100,7 @@
 
     // Create a simple rotated plane icon using an inline SVG inside a divIcon.
     function createPlaneIcon(heading, color){
-      color = color || '#000000ff';
+      color = color || '#553f3fff';
       var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24">'
         + '<g transform="translate(12 12)">'
         + '<path d="M0-10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="'+color+'"/>'

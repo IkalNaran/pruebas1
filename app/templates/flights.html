@@ -2,9 +2,9 @@
 {% block title %}Vuelos{% endblock %}
 {% block content %}
 <!-- Simple page that shows only the real-time flights map. Monitoring page remains unchanged. -->
-<div class="flights-map-container" style="padding:12px;">
+	<div class="flights-map-container">
 	<h2>Vuelos en tiempo real (CDMX)</h2>
-	<div id="map" style="height:720px;border-radius:8px;overflow:hidden;"></div>
+	<div id="map" class="map map-large"></div>
 </div>
 
 <!-- Load Leaflet and Socket.IO and the dashboard client (dashboard.js is tolerant to missing UI parts) -->

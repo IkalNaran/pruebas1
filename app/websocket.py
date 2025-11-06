@@ -48,14 +48,32 @@ def _parse_states(data):
     return flights
 
 
-def _poll_opensky(interval_seconds=5):
+def _poll_opensky(interval_seconds=15):
     """Background task: poll OpenSky and emit snapshots via Socket.IO."""
     # simple sliding window to estimate flights per minute
     history = []  # timestamps of snapshots (counts)
     while not stop_event.is_set():
         data = get_all_states(LAMIN, LOMIN, LAMAX, LOMAX)
-        if data is None:
-            # emit status down
+        # get_all_states may return a dict with 'error' and 'status_code' on failure
+        if data is None or (isinstance(data, dict) and data.get('error')):
+            # Rate limit (429) -> backoff longer
+            status_code = None
+            try:
+                status_code = data.get('status_code') if isinstance(data, dict) else None
+            except Exception:
+                status_code = None
+
+            if status_code == 429:
+                # emit warning and sleep longer to avoid hammering the API
+                try:
+                    socketio.emit('status_update', {'api': 'warn'}, namespace='/')
+                except Exception:
+                    pass
+                # longer backoff when rate limited
+                time.sleep(max(interval_seconds, 30))
+                continue
+
+            # Other errors -> mark as down and retry later
             try:
                 socketio.emit('status_update', {'api': 'down'}, namespace='/')
             except Exception:
