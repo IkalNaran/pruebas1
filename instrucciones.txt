@@ -1,0 +1,24 @@
+- Crear entorno virtual 
+
+python3 -m venv env
+
+- Activarlo:
+
+source /venv/bin/activate
+
+- Crear un archivo .env con:
+
+SECRET_KEY=tu-clave-secreta-muy-segura-aqui
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=flask_app
+DB_USER=postgres
+DB_PASSWORD=tu_password
+
+- Instalar dependencias:
+
+pip install -r requirements.txt
+
+- Ejecutar:
+
+python app.py

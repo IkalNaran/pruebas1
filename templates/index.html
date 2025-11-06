@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ mensaje }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ mensaje }}</h1>
+            <p class="subtitle">Bienvenido a tu aplicación Flask con {{ framework }} y {{ database }}</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>🚀 Tecnologías Usadas</h2>
+                <ul>
+                    <li><strong>Backend:</strong> Flask (Python)</li>
+                    <li><strong>Base de Datos:</strong> PostgreSQL</li>
+                    <li><strong>Templates:</strong> Jinja2</li>
+                    <li><strong>API Externa:</strong> OpenSky Network (próximamente)</li>
+                    <li><strong>Monitoring:</strong> Zabbix Cloud (próximamente)</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>📊 Estado del Sistema</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Flask App:</span>
+                        <span class="status-badge success">Activo</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Base de Datos:</span>
+                        <span class="status-badge" id="db-status">Verificando...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Jinja2:</span>
+                        <span class="status-badge success">Funcionando</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button onclick="healthCheck()" class="btn">Verificar Salud API</button>
+                <button onclick="initDatabase()" class="btn btn-secondary">Inicializar BD</button>
+                <button onclick="loadMessages()" class="btn btn-tertiary">Cargar Mensajes</button>
+            </div>
+
+            <div id="results" class="results"></div>
+        </main>
+
+        <footer>
+            <p>Proyecto Flask - Preparado para Zabbix Cloud</p>
+        </footer>
+    </div>
+
+    <script>
+        async function healthCheck() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                displayResults('Health Check', data);
+                
+                // Actualizar estado de BD en la UI
+                const dbStatus = document.getElementById('db-status');
+                dbStatus.textContent = data.database;
+                dbStatus.className = `status-badge ${data.database === 'conectado' ? 'success' : 'error'}`;
+            } catch (error) {
+                displayResults('Error', {error: error.message});
+            }
+        }
+
+        async function initDatabase() {
+            try {
+                const response = await fetch('/api/init-db');
+                const data = await response.json();
+                displayResults('Inicialización BD', data);
+            } catch (error) {
+                displayResults('Error', {error: error.message});
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/mensajes');
+                const data = await response.json();
+                displayResults('Mensajes de BD', data);
+            } catch (error) {
+                displayResults('Error', {error: error.message});
+            }
+        }
+
+        function displayResults(title, data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="card">
+                    <h3>${title}</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // Verificar salud al cargar la página
+        document.addEventListener('DOMContentLoaded', healthCheck);
+    </script>
+</body>
+</html>
