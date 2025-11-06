@@ -52,14 +52,38 @@
       if(avgEl) avgEl.textContent = value;
     }
 
-    // Utility: set card status
+    // Utility: set card status (colors centralized to CSS variables)
     function setCard(id, status){
       var el = document.getElementById(id+'-status');
       if(!el) return;
-      el.textContent = status.toUpperCase();
+      el.textContent = status ? status.toUpperCase() : '—';
       var parent = document.getElementById('card-'+id);
       if(!parent) return;
-      parent.style.border = '2px solid '+(status=='ok'? '#b71212ff' : status=='warn'? '#f59e0b' : '#ef4444');
+      var color = status==='ok' ? 'var(--accent)' : status==='warn' ? '#f59e0b' : '#ef4444';
+      parent.style.border = '2px solid '+color;
+    }
+
+    // API status indicator updater (dot + text + timestamp)
+    function updateApiIndicator(status){
+      var wrapper = document.getElementById('api-indicator');
+      var textEl = document.getElementById('api-indicator-text');
+      var timeEl = document.getElementById('api-last-checked');
+      if(!wrapper || !textEl) return;
+      wrapper.classList.remove('status-ok','status-warn','status-down','status-unknown');
+      var cls;
+      var readable;
+      switch(status){
+        case 'ok': cls='status-ok'; readable='API OpenSky: OK'; break;
+        case 'warn': cls='status-warn'; readable='API OpenSky: Limitada'; break;
+        case 'down': cls='status-down'; readable='API OpenSky: Caída'; break;
+        default: cls='status-unknown'; readable='API OpenSky: desconocido';
+      }
+      wrapper.classList.add(cls);
+      textEl.textContent = readable;
+      if(timeEl){
+        var now = new Date();
+        timeEl.textContent = now.toLocaleTimeString();
+      }
     }
 
     // Flights table renderer
@@ -150,17 +174,20 @@
         var shouldShow = passesFilters(data);
         if(markers[id]){
           markers[id].setLatLng([data.lat, data.lon]);
-          // update icon rotation
+          // update icon rotation + estimated style
           var el = markers[id].getElement && markers[id].getElement();
-          if(el){ el.style.transform = 'rotate('+(data.heading||0)+'deg)'; }
-          markers[id].bindPopup('<b>'+ (data.callsign||id) +'</b><br>Alt: '+(data.altitude||'—'));
+          if(el){
+            el.style.transform = 'rotate('+(data.heading||0)+'deg)';
+            el.style.opacity = data.estimated ? '0.7' : '1';
+          }
+          markers[id].bindPopup('<b>'+ (data.callsign||id) +'</b><br>'+(data.estimated?'(Estimado) ':'')+'Alt: '+(data.altitude||'—'));
           // show/hide based on filter
           if(shouldShow) markers[id].getElement && (markers[id].getElement().style.display=''); else markers[id].getElement && (markers[id].getElement().style.display='none');
         } else {
           // create div icon rotated
           var icon = createPlaneIcon(data.heading||0);
           var m = L.marker([data.lat, data.lon], {icon: icon}).addTo(map);
-          m.bindPopup('<b>'+ (data.callsign||id) +'</b><br>Alt: '+(data.altitude||'—'));
+          m.bindPopup('<b>'+ (data.callsign||id) +'</b><br>'+(data.estimated?'(Estimado) ':'')+'Alt: '+(data.altitude||'—'));
           markers[id]=m;
           if(!shouldShow){
             var el2 = m.getElement && m.getElement(); if(el2) el2.style.display='none';
@@ -205,12 +232,12 @@
           if(markers[id]){
             markers[id].setLatLng([data.lat, data.lon]);
             var el = markers[id].getElement && markers[id].getElement();
-            if(el){ el.style.transform = 'rotate('+(data.heading||0)+'deg)'; el.style.display = shouldShow ? '' : 'none'; }
-            markers[id].bindPopup('<b>'+ (data.callsign||id) +'</b><br>Alt: '+(data.altitude||'—'));
+            if(el){ el.style.transform = 'rotate('+(data.heading||0)+'deg)'; el.style.display = shouldShow ? '' : 'none'; el.style.opacity = data.estimated ? '0.7':'1'; }
+            markers[id].bindPopup('<b>'+ (data.callsign||id) +'</b><br>'+(data.estimated?'(Estimado) ':'')+'Alt: '+(data.altitude||'—'));
           } else {
             var icon = createPlaneIcon(data.heading||0);
             var m = L.marker([data.lat, data.lon], {icon: icon}).addTo(map);
-            m.bindPopup('<b>'+ (data.callsign||id) +'</b><br>Alt: '+(data.altitude||'—'));
+            m.bindPopup('<b>'+ (data.callsign||id) +'</b><br>'+(data.estimated?'(Estimado) ':'')+'Alt: '+(data.altitude||'—'));
             markers[id]=m;
             if(!shouldShow){ var el2 = m.getElement && m.getElement(); if(el2) el2.style.display='none'; }
           }
@@ -242,7 +269,10 @@
       });
 
       socket.on('status_update', function(s){
-        if(s.api) setCard('api', s.api);
+        if(s.api){
+          setCard('api', s.api);
+          updateApiIndicator(s.api);
+        }
         if(s.db) setCard('db', s.db);
         if(s.backend) setCard('backend', s.backend);
         if(s.zabbix) setCard('zabbix', s.zabbix);

@@ -9,10 +9,10 @@
 <body>
     <header>
         <h1>Zabbix Flights Dashboard</h1>
-        <nav>
-            <a href="/">Inicio</a> |
-            <a href="/flights">Vuelos</a> |
-            <a href="/monitoring">Monitoreo</a>
+        <nav class="main-nav">
+            <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Inicio</a>
+            <a href="/flights" class="{{ 'active' if request.path.startswith('/flights') else '' }}">Vuelos</a>
+            <a href="/monitoring" class="{{ 'active' if request.path.startswith('/monitoring') else '' }}">Monitoreo</a>
         </nav>
     </header>
 
