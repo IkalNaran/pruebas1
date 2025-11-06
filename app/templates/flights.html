@@ -1,6 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Vuelos{% endblock %}
+{% block title %}Vuelos en tiempo real{% endblock %}
 {% block content %}
 <h2>Vuelos en tiempo real</h2>
-<p>Próximamente: mapa y datos de OpenSky.</p>
+<div id="map" style="height: 600px; width: 100%;"></div>
+
+<!-- ✅ Versión sin atributos de integridad -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="{{ url_for('static', filename='js/realtime.js') }}"></script>
 {% endblock %}

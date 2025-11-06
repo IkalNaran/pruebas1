@@ -17,3 +17,9 @@ nav a {
     text-decoration: none;
     margin: 0 10px;
 }
+
+#map {
+    border: 2px solid #004b8d;
+    border-radius: 10px;
+    margin-top: 10px;
+}

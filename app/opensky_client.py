@@ -15,7 +15,7 @@ def get_all_states(lamin=None, lomin=None, lamax=None, lomax=None):
             "lomin": lomin,
             "lamax": lamax,
             "lomax": lomax
-        })
+        })  
 
     try:
         response = requests.get(url, params=params, timeout=10)
