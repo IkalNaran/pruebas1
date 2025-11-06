@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
+import os
 
 db = SQLAlchemy()
 socketio = SocketIO()
@@ -10,7 +11,18 @@ def create_app():
     app.config.from_object('app.config.Config')
 
     db.init_app(app)
-    socketio.init_app(app)
+    # Allow Socket.IO connections from the frontend (during development allow all origins).
+    socketio.init_app(app, cors_allowed_origins='*')
+
+    # start websocket background poller (only once when running server)
+    # avoid double-start with the reloader by checking WERKZEUG_RUN_MAIN
+    try:
+        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            from app import websocket as _ws
+            _ws.start_background_tasks(app)
+    except Exception:
+        # best-effort: if starting background tasks fails, continue
+        pass
 
     # Registrar Blueprints
     from app.routes.main_routes import main_bp

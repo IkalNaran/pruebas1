@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Vuelos{% endblock %}
 {% block content %}
-<h2>Vuelos en tiempo real</h2>
-<p>Próximamente: mapa y datos de OpenSky.</p>
+<!-- Simple page that shows only the real-time flights map. Monitoring page remains unchanged. -->
+<div class="flights-map-container" style="padding:12px;">
+	<h2>Vuelos en tiempo real (CDMX)</h2>
+	<div id="map" style="height:720px;border-radius:8px;overflow:hidden;"></div>
+</div>
+
+<!-- Load Leaflet and Socket.IO and the dashboard client (dashboard.js is tolerant to missing UI parts) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
