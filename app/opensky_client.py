@@ -29,10 +29,25 @@ def get_all_states(
     except requests.HTTPError as he:
         # HTTP errors (e.g. 429 rate limit) -> return an error dict so caller can react
         status = None
+        headers = {}
         try:
             status = he.response.status_code
+            headers = he.response.headers or {}
         except Exception:
             status = None
+            headers = {}
+
+        # handle rate limit specially
+        if status == 429:
+            retry_after = headers.get('Retry-After')
+            ra = None
+            try:
+                ra = int(retry_after) if retry_after is not None else None
+            except Exception:
+                ra = None
+            print(f"HTTP error consultando OpenSky API: 429 (rate limited). Retry-After={retry_after}")
+            return {"error": "rate_limited", "status_code": 429, "retry_after": ra}
+
         print(f"HTTP error consultando OpenSky API: {he}")
         return {"error": str(he), "status_code": status}
     except requests.RequestException as e:

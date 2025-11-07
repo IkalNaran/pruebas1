@@ -55,6 +55,8 @@ def _poll_opensky(interval_seconds=15, app=None):
     """Background task: poll OpenSky and emit snapshots via Socket.IO."""
     # simple sliding window to estimate flights per minute
     history = []  # timestamps of snapshots (counts)
+    # consecutive rate-limit counter for exponential backoff
+    rate_limit_backoff = 0
     while not stop_event.is_set():
         data = get_all_states(LAMIN, LOMIN, LAMAX, LOMAX)
         # get_all_states may return a dict with 'error' and 'status_code' on failure
@@ -72,8 +74,22 @@ def _poll_opensky(interval_seconds=15, app=None):
                     socketio.emit('status_update', {'api': 'warn'}, namespace='/')
                 except Exception:
                     pass
-                # longer backoff when rate limited
-                time.sleep(max(interval_seconds, 30))
+
+                # prefer server-specified Retry-After when present
+                retry_after = None
+                try:
+                    retry_after = data.get('retry_after') if isinstance(data, dict) else None
+                except Exception:
+                    retry_after = None
+
+                if retry_after:
+                    sleep_for = max(interval_seconds, int(retry_after))
+                else:
+                    # exponential backoff with cap (up to 5 minutes)
+                    sleep_for = min(300, interval_seconds * (2 ** rate_limit_backoff))
+                    rate_limit_backoff = min(rate_limit_backoff + 1, 8)
+
+                time.sleep(sleep_for)
                 continue
 
             # Other errors -> mark as down and retry later
@@ -83,6 +99,13 @@ def _poll_opensky(interval_seconds=15, app=None):
                 pass
             time.sleep(interval_seconds)
             continue
+
+        # reset rate-limit backoff on successful response
+        try:
+            if not (isinstance(data, dict) and data.get('error')):
+                rate_limit_backoff = 0
+        except Exception:
+            pass
 
         flights = _parse_states(data)
         # Mark fresh snapshot flights as not estimated
