@@ -62,7 +62,42 @@ def get_all_states(
             "lamax": lamax,
             "lomax": lomax
         })
+        
+        
+    def get_access_token():
+        """Obtiene un token de acceso usando clientId y clientSecret desde credentials.json."""
+        creds_path = Path(__file__).parent / "credentials.json"
 
+        if not creds_path.exists():
+            print("No se encontró el archivo credentials.json")
+            return None
+
+        with open(creds_path, "r") as f:
+            creds = json.load(f)
+
+        client_id = creds.get("clientId")
+        client_secret = creds.get("clientSecret")
+
+        if not client_id or not client_secret:
+            print("Faltan clientId o clientSecret en credentials.json")
+            return None
+
+        data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret
+        }
+
+        try:
+            response = requests.post(AUTH_URL, data=data, timeout=10)
+            response.raise_for_status()
+            token_data = response.json()
+            return token_data.get("access_token")
+        except requests.RequestException as e:
+            print(f"Error al obtener el token de OpenSky: {e}")
+            return None
+
+    
     token = get_access_token()
     if not token:
         return {"error": "No se pudo obtener el token", "status_code": None}

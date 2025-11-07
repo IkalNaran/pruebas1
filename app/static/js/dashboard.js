@@ -349,7 +349,20 @@
       }catch(e){} });
       socket.on('flights_snapshot', function(list){ try{ processSnapshot(list, { partial: isFlightsPage(), updateTable: !isFlightsPage() }); }catch(e){} });
       socket.on('flight_remove', function(data){ var id=data.icao24; if(markers[id]&&map){ map.removeLayer(markers[id]); } delete markers[id]; delete currentFlights[id]; applyFiltersToMarkers(); });
-      socket.on('zabbix_event', function(e){ var last=document.getElementById('last-trigger'); if(last) last.textContent = e.message || e.host || 'trigger'; updateHomeCards(); });
+      socket.on('zabbix_event', function(e){ var last=document.getElementById('last-trigger'); if(last) last.textContent = e.message || e.host || 'trigger'; updateHomeCards();
+        try{ var events = document.getElementById('events'); if(events && e && (e.message||e.host)){ var el = document.createElement('div'); el.textContent = (new Date().toLocaleTimeString()) + ' — ' + (e.message || e.host); events.insertBefore(el, events.firstChild); }
+          // If the event contains an icon:telegram flag, show the telegram indicator
+          if(e && e.icon === 'telegram'){
+            var t = document.getElementById('telegram-alert');
+            if(t){
+              t.style.display='block';
+              try{ t.innerHTML = '🔔 <strong>Alerta Telegram</strong> — '+ (e.message || ''); }catch(ex){}
+              // hide after 12 seconds
+              setTimeout(function(){ t.style.display='none'; }, 12000);
+            }
+          }
+        }catch(ex){}
+      });
       socket.on('status_update', function(s){ if(s.api) { setCard('api', s.api); updateApiIndicator(s.api); } if(s.db) setCard('db', s.db); if(s.backend) setCard('backend', s.backend); if(s.zabbix) setCard('zabbix', s.zabbix); });
       socket.on('flights_per_min', function(n){ pushChartPoint(n); });
     } else {
