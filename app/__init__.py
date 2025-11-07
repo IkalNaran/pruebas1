@@ -20,6 +20,12 @@ def create_app():
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             from app import websocket as _ws
             _ws.start_background_tasks(app)
+            # Start Zabbix background fetcher if configured
+            try:
+                from app.zabbix_client import start_zabbix_background
+                start_zabbix_background()
+            except Exception:
+                pass
     except Exception:
         # best-effort: if starting background tasks fails, continue
         pass

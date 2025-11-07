@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from app.opensky_client import get_all_states
+from app.providers import get_states_any, get_status
 import time
 
 api_bp = Blueprint('api', __name__)
@@ -24,7 +24,7 @@ def get_opensky_data():
     lamax = request.args.get('lamax', type=float)
     lomax = request.args.get('lomax', type=float)
 
-    data = get_all_states(lamin, lomin, lamax, lomax)
+    data = get_states_any(lamin, lomin, lamax, lomax)
 
     # If the client function signals an error, try to serve cached snapshot when reasonable
     if isinstance(data, dict) and data.get('error'):
@@ -37,7 +37,7 @@ def get_opensky_data():
             return jsonify(cached), 200
         # No cache available; return an error with the reported status code when provided
         return jsonify({
-            'error': 'No se pudieron obtener datos de OpenSky',
+            'error': 'No se pudieron obtener datos de vuelos',
             'detail': data.get('error'),
         }), int(status_code) if status_code else 502
 
@@ -48,3 +48,10 @@ def get_opensky_data():
     _last_snapshot = data
     _last_snapshot_ts = time.time()
     return jsonify(data)
+
+
+@api_bp.route('/status', methods=['GET'])
+def status():
+    """Return current connection/provider status for the frontend indicator."""
+    st = get_status()
+    return jsonify(st)

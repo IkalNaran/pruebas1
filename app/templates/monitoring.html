@@ -44,20 +44,67 @@
 
 				<h4>Filtros</h4>
 				<div class="filters">
-					<label for="filter-airline">Aerolínea / Callsign</label>
-					<select id="filter-airline">
-						<option value="">Todas</option>
-					</select>
+					<div class="filters-grid">
+						<div class="field">
+							<label for="filter-airline">Aerolínea / Callsign</label>
+							<select id="filter-airline">
+								<option value="">Todas</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="filter-country">País (origen)</label>
+							<select id="filter-country">
+								<option value="">Todos</option>
+							</select>
+						</div>
 
-					<label for="filter-alt-min">Altitud mínima (m)</label>
-					<input id="filter-alt-min" type="number" placeholder="0" />
+						<div class="field">
+							<label for="filter-alt-min">Altitud mínima (m)</label>
+							<input id="filter-alt-min" type="number" placeholder="0" />
+						</div>
+						<div class="field">
+							<label for="filter-alt-max">Altitud máxima (m)</label>
+							<input id="filter-alt-max" type="number" placeholder="20000" />
+						</div>
 
-					<label for="filter-alt-max">Altitud máxima (m)</label>
-					<input id="filter-alt-max" type="number" placeholder="20000" />
+						<div class="field">
+							<label for="filter-speed-min">Velocidad mínima (m/s)</label>
+							<input id="filter-speed-min" type="number" placeholder="0" />
+						</div>
+						<div class="field">
+							<label for="filter-speed-max">Velocidad máxima (m/s)</label>
+							<input id="filter-speed-max" type="number" placeholder="350" />
+						</div>
 
-					<div style="margin-top:8px;display:flex;gap:8px;">
-						<button id="apply-filters">Aplicar</button>
-						<button id="clear-filters">Limpiar</button>
+						<div class="field full">
+							<label>Categoría</label>
+							<div class="cats">
+								<label class="pill"><input type="checkbox" id="cat-com" checked /> Comerciales</label>
+								<label class="pill"><input type="checkbox" id="cat-emp" checked /> Empresariales</label>
+								<label class="pill"><input type="checkbox" id="cat-priv" checked /> Privados</label>
+							</div>
+						</div>
+
+						<div class="field">
+							<label for="filter-lat-min">Latitud mínima</label>
+							<input id="filter-lat-min" type="number" step="0.0001" placeholder="18.90" />
+						</div>
+						<div class="field">
+							<label for="filter-lat-max">Latitud máxima</label>
+							<input id="filter-lat-max" type="number" step="0.0001" placeholder="19.80" />
+						</div>
+
+						<div class="field full">
+							<label for="filter-text">Buscar texto</label>
+							<input id="filter-text" type="text" placeholder="AMX, N123, XA-ABC" />
+						</div>
+
+						<div class="field full">
+							<div class="buttons">
+								<button id="apply-filters">Aplicar</button>
+								<button id="clear-filters" class="ghost">Limpiar</button>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -86,22 +133,5 @@
 <!-- Dashboard behaviour -->
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
-<style>
-/* Minimal dashboard styles - you can move these to css/style.css */
-.dashboard-container{display:flex;flex-direction:column;gap:16px;padding:12px}
-.status-cards{display:flex;gap:12px}
-.card{background:#0f1720;color:#fff;padding:10px;border-radius:8px;flex:1}
-.card-title{font-size:0.9rem;color:#9ca3af}
-.card-value{font-size:1.4rem;margin-top:6px}
-.main-area{display:flex;gap:12px}
-.map{flex:1;height:560px;border-radius:8px;overflow:hidden}
-.right-panel{width:300px;background:#071126;color:#fff;padding:12px;border-radius:8px}
-.bottom-panel{display:flex;gap:12px}
-.chart-card{flex:1;background:#071126;padding:12px;border-radius:8px}
-.table-card{width:360px;background:#071126;padding:12px;border-radius:8px}
-.events{max-height:240px;overflow:auto}
-/* responsive */
-@media (max-width:900px){.main-area{flex-direction:column}.right-panel{width:100%}.map{height:420px}}
-</style>
 
 {% endblock %}

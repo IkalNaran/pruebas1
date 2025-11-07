@@ -1,7 +1,7 @@
 import time
 import math
 from threading import Event, Thread
-from app.opensky_client import get_all_states
+from app.providers import get_states_any
 from app import socketio
 
 # Bounding box for Mexico City (approx)
@@ -22,27 +22,40 @@ def _parse_states(data):
     flights = []
     for s in data['states']:
         # OpenSky state vector format (index):
-        # 0: icao24, 1: callsign, 5: longitude, 6: latitude, 7: baro_altitude,
-        # 9: velocity, 10: true_track, 4: last_contact
+        # 0: icao24, 1: callsign, 2: origin_country, 4: last_contact,
+        # 5: longitude, 6: latitude, 7: baro_altitude, 8: on_ground,
+        # 9: velocity, 10: true_track, 11: vertical_rate, 13: geo_altitude, 14: squawk
         try:
             icao24 = s[0]
             callsign = (s[1] or '').strip() if s[1] else ''
+            origin_country = s[2] if len(s) > 2 else None
             lon = s[5]
             lat = s[6]
             altitude = s[7]
+            on_ground = s[8] if len(s) > 8 else None
             velocity = s[9]
             heading = s[10]
             last_seen = s[4]
+            vrate = s[11] if len(s) > 11 else None
+            geo_alt = s[13] if len(s) > 13 else None
+            squawk = s[14] if len(s) > 14 else None
             if lat is None or lon is None:
                 continue
             flights.append({
                 'icao24': icao24,
                 'callsign': callsign,
+                'country': origin_country,
+                'origin_country': origin_country,
                 'lat': lat,
                 'lon': lon,
                 'altitude': altitude,
+                'geo_altitude': geo_alt,
                 'speed': velocity,
                 'heading': heading,
+                'vrate': vrate,
+                'on_ground': on_ground,
+                'squawk': squawk,
+                'dest_country': None,
                 'last_seen': last_seen
             })
         except Exception:
@@ -56,7 +69,7 @@ def _poll_opensky(interval_seconds=15):
     # simple sliding window to estimate flights per minute
     history = []  # timestamps of snapshots (counts)
     while not stop_event.is_set():
-        data = get_all_states(LAMIN, LOMIN, LAMAX, LOMAX)
+        data = get_states_any(LAMIN, LOMIN, LAMAX, LOMAX)
         # get_all_states may return a dict with 'error' and 'status_code' on failure
         if data is None or (isinstance(data, dict) and data.get('error')):
             # Rate limit (429) -> backoff longer
@@ -84,19 +97,59 @@ def _poll_opensky(interval_seconds=15):
             time.sleep(interval_seconds)
             continue
 
+        # if data came from cache/bootstrap, mark status as warn later
+        is_cached = isinstance(data, dict) and (data.get('cached') is True or data.get('bootstrap') is True)
         flights = _parse_states(data)
+        now = time.time()
+        # Try to derive speed/heading if missing using previous snapshot
+        try:
+            prev_map = dict(_current_flights) if _current_flights else {}
+            dt_global = max(1.0, now - _last_snapshot_ts) if _last_snapshot_ts else None
+            for f in flights:
+                icao = f.get('icao24')
+                if not icao:
+                    continue
+                # If missing speed or heading, estimate from previous position
+                if (f.get('speed') in (None, 0)) or (f.get('heading') is None):
+                    prev = prev_map.get(icao)
+                    if prev and prev.get('lat') is not None and prev.get('lon') is not None and dt_global:
+                        # Haversine distance (meters) and bearing (degrees)
+                        try:
+                            lat1 = math.radians(prev['lat']); lon1 = math.radians(prev['lon'])
+                            lat2 = math.radians(f['lat']);    lon2 = math.radians(f['lon'])
+                            dlat = lat2 - lat1; dlon = lon2 - lon1
+                            a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+                            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                            distance = 6371000.0 * c
+                            speed = distance / dt_global if dt_global else 0
+                            y = math.sin(dlon) * math.cos(lat2)
+                            x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(dlon)
+                            bearing = (math.degrees(math.atan2(y, x)) + 360.0) % 360.0
+                            if f.get('speed') in (None, 0):
+                                f['speed'] = speed
+                            if f.get('heading') is None:
+                                f['heading'] = bearing
+                        except Exception:
+                            pass
+        except Exception:
+            pass
         # Mark fresh snapshot flights as not estimated
         for f in flights:
             f['estimated'] = False
         # store snapshot for predictive movement
         global _current_flights, _last_snapshot_ts
         _current_flights = {f['icao24']: f for f in flights if f.get('icao24')}
-        _last_snapshot_ts = time.time()
+        _last_snapshot_ts = now
         try:
             # Emit a snapshot (list) — dashboard will diff/create markers
             socketio.emit('flights_snapshot', flights, namespace='/')
-            # status ok
-            socketio.emit('status_update', {'api': 'ok'}, namespace='/')
+            # status ok if live, warn if cached snapshot
+            provider = None
+            try:
+                provider = data.get('provider') if isinstance(data, dict) else None
+            except Exception:
+                provider = None
+            socketio.emit('status_update', {'api': 'warn' if is_cached else 'ok', 'provider': provider}, namespace='/')
             # Optionally emit individual updates (limited) to keep markers moving per-flight
             for f in flights[:80]:
                 socketio.emit('flight_update', f, namespace='/')

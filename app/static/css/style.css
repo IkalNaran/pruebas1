@@ -26,29 +26,40 @@ main{padding:12px}
 
 /* Dashboard specific */
 .dashboard-container{max-width:1200px;margin:8px auto}
-.status-cards{display:flex;gap:12px}
+.status-cards{display:flex;gap:12px;flex-wrap:wrap}
 .card{background:var(--card);color:var(--muted);padding:12px;border-radius:10px;flex:1;border:1px solid var(--card-border)}
 .card-title{font-size:0.85rem;color:var(--muted)}
 .card-value{font-size:1.4rem;margin-top:6px;color:#fff}
 
 .main-area{display:flex;gap:12px}
-.map{flex:1;height:560px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+.map{flex:1;height:560px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6);overflow:hidden}
 .map-large{height:720px}
-.right-panel{width:320px;background:var(--panel);color:var(--muted);padding:12px;border-radius:8px}
+.right-panel{width:340px;background:var(--panel);color:var(--muted);padding:12px;border-radius:8px}
+.right-panel h3{margin:6px 0 8px;color:#fff}
+.right-panel h4{margin:14px 0 8px;color:#e2e8f0}
 .bottom-panel{display:flex;gap:12px;margin-top:12px}
 .chart-card{flex:1;background:var(--panel);padding:12px;border-radius:8px}
 .table-card{width:360px;background:var(--panel);padding:12px;border-radius:8px}
 
 .events{max-height:240px;overflow:auto}
 .flights-table{width:100%;border-collapse:collapse}
+.flights-table thead th{ position:sticky; top:0; background:rgba(7,17,38,0.95); backdrop-filter: blur(4px);}
 .flights-table th{ text-align:left;padding:6px;color:var(--muted);font-size:0.85rem}
 .flights-table td{padding:6px;border-top:1px solid rgba(255,255,255,0.03)}
+.flights-table tbody tr:nth-child(odd){background:rgba(255,255,255,0.02)}
 
 /* Filters */
 .filters label{display:block;font-size:0.82rem;color:var(--muted);margin-top:8px}
 .filters select,.filters input{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.02);color:#fff}
-.filters button{background:var(--accent);border:none;color:#031018;padding:8px 10px;border-radius:6px;cursor:pointer}
-.filters button:nth-child(2){background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+.filters .filters-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.filters .field{display:flex;flex-direction:column}
+.filters .field.full{grid-column:1/-1}
+.filters .buttons{display:flex;gap:8px}
+.filters button{background:var(--accent);border:none;color:#031018;padding:9px 12px;border-radius:8px;cursor:pointer}
+.filters button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.08)}
+.filters .cats{display:flex;gap:8px;flex-wrap:wrap}
+.filters .cats .pill{padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);display:flex;align-items:center;gap:6px;color:#cbd5e1}
+.filters .toggle{display:flex;align-items:center;gap:8px;color:#cbd5e1}
 
 /* plane div icon tweaks */
 .plane-div-icon{display:flex;align-items:center;justify-content:center}
@@ -57,7 +68,7 @@ main{padding:12px}
 .leaflet-marker-icon{transition:transform 0.9s linear;will-change:transform}
 
 /* API status indicator */
-.system-status{display:flex;justify-content:flex-start}
+.system-status{display:flex;justify-content:flex-start;margin-bottom:6px}
 .status-indicator{display:inline-flex;align-items:center;gap:8px;background:var(--panel);padding:6px 10px;border-radius:10px;border:1px solid var(--card-border)}
 .status-indicator .dot{width:8px;height:8px;border-radius:50%;display:inline-block;box-shadow:0 0 10px rgba(0,0,0,0.4)}
 .status-indicator.status-ok .dot{background:var(--accent)}
