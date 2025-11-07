@@ -68,6 +68,7 @@ def get_opensky_data():
 @api_bp.route('/zabbix/webhook', methods=['POST'])
 def zabbix_webhook():
     data = request.json
+    trigger = data.get('trigger', '')
 
     # Zabbix webhook: se espera un JSON con al menos 'trigger' y 'value'.
     trigger = data.get('trigger') or data.get('trigger_name') or ''
