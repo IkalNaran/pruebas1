@@ -24,6 +24,17 @@ header h1{margin:0;font-size:1.1rem;color:#fff}
 
 main{padding:12px}
 
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+#map {
+    border: 2px solid #004b8d;
+    border-radius: 10px;
+    margin-top: 10px;
+}
 /* Dashboard specific */
 .dashboard-container{max-width:1200px;margin:8px auto}
 .status-cards{display:flex;gap:12px;flex-wrap:wrap}

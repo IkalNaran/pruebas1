@@ -1,6 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Vuelos{% endblock %}
+{% block title %}Vuelos en tiempo real{% endblock %}
 {% block content %}
+<h2>Vuelos en tiempo real</h2>
+<div id="map" style="height: 600px; width: 100%;"></div>
+
+<!-- ✅ Versión sin atributos de integridad -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="{{ url_for('static', filename='js/realtime.js') }}"></script>
 <!-- Simple page that shows only the real-time flights map. Monitoring page remains unchanged. -->
 	<div class="flights-map-container">
 	<h2>Vuelos en tiempo real (CDMX)</h2>

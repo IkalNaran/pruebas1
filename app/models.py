@@ -1,18 +1,42 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
 from app import db
 
 
-class ZabbixEvent(db.Model):
-	__tablename__ = 'zabbix_events'
+class FlightSnapshot(db.Model):
+    __tablename__ = 'flight_snapshots'
 
-	id = db.Column(db.Integer, primary_key=True)
-	eventid = db.Column(db.String(64), unique=True, index=True)
-	triggerid = db.Column(db.String(64), index=True)
-	host = db.Column(db.String(255), index=True)
-	severity = db.Column(db.Integer)
-	status = db.Column(db.String(32))  # e.g., 'PROBLEM' or 'OK'
-	message = db.Column(db.String(1024))
-	ts = db.Column(db.Integer, index=True)  # epoch seconds
+    id = db.Column(db.Integer, primary_key=True)
+    icao24 = db.Column(db.String(12), index=True)
+    callsign = db.Column(db.String(32))
+    lat = db.Column(db.Float)
+    lon = db.Column(db.Float)
+    altitude = db.Column(db.Float)
+    speed = db.Column(db.Float)
+    heading = db.Column(db.Float)
+    last_seen = db.Column(db.Integer)
+    raw = db.Column(JSON)                 # Guarda el JSON original del vuelo
+    created_at = db.Column(
+        db.DateTime, default=datetime.utcnow, index=True
+    )
 
-	def __repr__(self):
-		return f"<ZabbixEvent eventid={self.eventid} host={self.host} sev={self.severity} status={self.status}>"
+class SystemStatus(db.Model):
+    __tablename__ = 'system_status'
 
+    id = db.Column(db.Integer, primary_key=True)
+    parameter = db.Column(db.String(50), unique=True)
+    value = db.Column(db.String(100))
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+class EventLog(db.Model):
+    __tablename__ = 'event_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50))
+    description = db.Column(db.Text)
+    created_at = db.Column(
+        db.DateTime, default=datetime.utcnow
+    )

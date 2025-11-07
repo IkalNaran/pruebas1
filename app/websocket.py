@@ -2,7 +2,8 @@ import time
 import math
 from threading import Event, Thread
 from app.providers import get_states_any
-from app import socketio
+from app.opensky_client import get_all_states
+from app import socketio, db
 
 # Bounding box for Mexico City (approx)
 LAMIN = 18.90
@@ -64,10 +65,12 @@ def _parse_states(data):
     return flights
 
 
-def _poll_opensky(interval_seconds=15):
+def _poll_opensky(interval_seconds=15, app=None):
     """Background task: poll OpenSky and emit snapshots via Socket.IO."""
     # simple sliding window to estimate flights per minute
     history = []  # timestamps of snapshots (counts)
+    # consecutive rate-limit counter for exponential backoff
+    rate_limit_backoff = 0
     while not stop_event.is_set():
         data = get_states_any(LAMIN, LOMIN, LAMAX, LOMAX)
         # get_all_states may return a dict with 'error' and 'status_code' on failure
@@ -85,8 +88,22 @@ def _poll_opensky(interval_seconds=15):
                     socketio.emit('status_update', {'api': 'warn'}, namespace='/')
                 except Exception:
                     pass
-                # longer backoff when rate limited
-                time.sleep(max(interval_seconds, 30))
+
+                # prefer server-specified Retry-After when present
+                retry_after = None
+                try:
+                    retry_after = data.get('retry_after') if isinstance(data, dict) else None
+                except Exception:
+                    retry_after = None
+
+                if retry_after:
+                    sleep_for = max(interval_seconds, int(retry_after))
+                else:
+                    # exponential backoff with cap (up to 5 minutes)
+                    sleep_for = min(300, interval_seconds * (2 ** rate_limit_backoff))
+                    rate_limit_backoff = min(rate_limit_backoff + 1, 8)
+
+                time.sleep(sleep_for)
                 continue
 
             # Other errors -> mark as down and retry later
@@ -97,8 +114,13 @@ def _poll_opensky(interval_seconds=15):
             time.sleep(interval_seconds)
             continue
 
-        # if data came from cache/bootstrap, mark status as warn later
-        is_cached = isinstance(data, dict) and (data.get('cached') is True or data.get('bootstrap') is True)
+        # reset rate-limit backoff on successful response
+        try:
+            if not (isinstance(data, dict) and data.get('error')):
+                rate_limit_backoff = 0
+        except Exception:
+            pass
+
         flights = _parse_states(data)
         now = time.time()
         # Try to derive speed/heading if missing using previous snapshot
@@ -156,6 +178,38 @@ def _poll_opensky(interval_seconds=15):
         except Exception:
             pass
 
+        # Persist flights into DB (best-effort; do not block polling on DB failures)
+        if app is not None and flights:
+            try:
+                from app.models import FlightSnapshot
+                with app.app_context():
+                    objs = []
+                    for f in flights:
+                        try:
+                            obj = FlightSnapshot(
+                                icao24=(f.get('icao24') or '')[:12],
+                                callsign=(f.get('callsign') or '')[:32],
+                                lat=float(f.get('lat')),
+                                lon=float(f.get('lon')),
+                                altitude=(None if f.get('altitude') is None else float(f.get('altitude'))),
+                                speed=(None if f.get('speed') is None else float(f.get('speed'))),
+                                heading=(None if f.get('heading') is None else float(f.get('heading'))),
+                                last_seen=(None if f.get('last_seen') is None else int(f.get('last_seen'))),
+                                raw=f
+                            )
+                            objs.append(obj)
+                        except Exception:
+                            continue
+                    if objs:
+                        try:
+                            db.session.add_all(objs)
+                            db.session.commit()
+                        except Exception:
+                            db.session.rollback()
+            except Exception:
+                # swallow persistence errors
+                pass
+
         # record history length for simple per-minute metric
         now = time.time()
         history.append((now, len(flights)))
@@ -177,11 +231,12 @@ def start_background_tasks(app=None):
     """Start the polling background task. Call this once after SocketIO is initialized."""
     # start background using socketio helper
     try:
-        socketio.start_background_task(_poll_opensky)
+        # pass the Flask app so the poller can use app.app_context() for DB writes
+        socketio.start_background_task(_poll_opensky, 15, app)
     except Exception:
         # fallback to plain thread if start_background_task unavailable
         import threading
-        t = threading.Thread(target=_poll_opensky, daemon=True)
+        t = threading.Thread(target=_poll_opensky, args=(15, app), daemon=True)
         t.start()
 
     # Start predictive movement emitter (dead-reckoning) to animate markers between snapshots.

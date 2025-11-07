@@ -1,8 +1,12 @@
 from flask import Blueprint, jsonify, request
 from app.providers import get_states_any, get_status
+from app.opensky_client import get_all_states
+from app.models import SystemStatus
+from app.zabbix_client import update_system_status, log_event
+from app import db    # ✅ ESTA ES LA BUENA
 import time
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 # Simple in-memory cache for the last successful OpenSky response
 _last_snapshot = None
@@ -55,3 +59,35 @@ def status():
     """Return current connection/provider status for the frontend indicator."""
     st = get_status()
     return jsonify(st)
+
+@api_bp.route('/zabbix/webhook', methods=['POST'])
+def zabbix_webhook():
+    data = request.json
+
+    trigger = data.get('trigger')
+    value = data.get('value')
+
+    if not trigger:
+        return jsonify({"error": "invalid format"}), 400
+    
+    update_system_status(trigger, value)
+
+    log_event("ZABBIX_TRIGGER", f"{trigger} => {value}")
+
+    return jsonify({"status": "ok"})
+
+@api_bp.route("/system-status")
+def system_status():
+    from app.models import SystemStatus
+
+    rows = SystemStatus.query.all()
+    data = {r.parameter: r.value for r in rows}
+    return jsonify(data)
+
+@api_bp.route("/db-test")
+def db_test():
+    try:
+        rows = SystemStatus.query.all()
+        return jsonify({"status": "ok", "rows": len(rows)})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
