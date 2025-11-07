@@ -1,53 +1,87 @@
 import os
+import json
 import requests
+from pathlib import Path
 
 BASE_URL = "https://opensky-network.org/api"
+AUTH_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 
-def get_all_states(
-    lamin=18.8, lomin=-100.2, lamax=20.2, lomax=-98.6
-):
+def get_credentials():
+    """Obtiene las credenciales de variables de entorno o archivo."""
+    # Intentar desde variables de entorno primero
+    client_id = os.getenv("OPENSKY_CLIENT_ID")
+    client_secret = os.getenv("OPENSKY_CLIENT_SECRET")
+    
+    if client_id and client_secret:
+        return client_id, client_secret
+    
+    # Intentar desde archivo
+    cred_file = Path("credentials.json")
+    if cred_file.exists():
+        try:
+            with open(cred_file) as f:
+                creds = json.load(f)
+            return creds.get("clientId"), creds.get("clientSecret")
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"Error leyendo credentials.json: {e}")
+    
+    return None, None
+
+def get_access_token():
+    """Obtiene el token OAuth2 usando client_credentials."""
+    try:
+        client_id, client_secret = get_credentials()
+        
+        if not client_id or not client_secret:
+            print("Error: No se encontraron credenciales. Configura las variables de entorno OPENSKY_CLIENT_ID y OPENSKY_CLIENT_SECRET, o crea un archivo credentials.json")
+            return None
+        
+        auth_data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret
+        }
+        auth_headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        response = requests.post(AUTH_URL, data=auth_data, headers=auth_headers)
+        response.raise_for_status()
+        token = response.json().get("access_token")
+        if not token:
+            print("Error: token no recibido:", response.text)
+            return None
+        return token
+    except Exception as e:
+        print(f"Error al obtener el token: {e}")
+        return None
+
+# El resto del código permanece igual...
+
+def get_all_states(lamin=None, lomin=None, lamax=None, lomax=None):
+    """Obtiene datos de vuelos actuales. Puede filtrar por área geográfica."""
     url = f"{BASE_URL}/states/all"
-    params = {
-        "lamin": lamin,
-        "lomin": lomin,
-        "lamax": lamax,
-        "lomax": lomax
+    params = {}
+    if all(v is not None for v in [lamin, lomin, lamax, lomax]):
+        params.update({
+            "lamin": lamin,
+            "lomin": lomin,
+            "lamax": lamax,
+            "lomax": lomax
+        })
+
+    token = get_access_token()
+    if not token:
+        return {"error": "No se pudo obtener el token", "status_code": None}
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "ZabbixFlights/1.0"
     }
 
     try:
-        # Optional Basic Auth to increase rate limits
-        auth = None
-        user = os.environ.get('OPEN_SKY_USER')
-        pwd = os.environ.get('OPEN_SKY_PASS')
-        if user and pwd:
-            auth = (user, pwd)
-        headers = {'User-Agent': 'ZabbixFlights/1.0'}
-        response = requests.get(url, params=params, timeout=10, auth=auth, headers=headers)
+        response = requests.get(url, params=params, timeout=10, headers=headers)
         response.raise_for_status()
-        data = response.json()
-        return data
+        return response.json()
     except requests.HTTPError as he:
-        # HTTP errors (e.g. 429 rate limit) -> return an error dict so caller can react
-        status = None
-        headers = {}
-        try:
-            status = he.response.status_code
-            headers = he.response.headers or {}
-        except Exception:
-            status = None
-            headers = {}
-
-        # handle rate limit specially
-        if status == 429:
-            retry_after = headers.get('Retry-After')
-            ra = None
-            try:
-                ra = int(retry_after) if retry_after is not None else None
-            except Exception:
-                ra = None
-            print(f"HTTP error consultando OpenSky API: 429 (rate limited). Retry-After={retry_after}")
-            return {"error": "rate_limited", "status_code": 429, "retry_after": ra}
-
+        status = getattr(he.response, "status_code", None)
         print(f"HTTP error consultando OpenSky API: {he}")
         return {"error": str(he), "status_code": status}
     except requests.RequestException as e:
