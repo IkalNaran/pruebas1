@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request
 from app.opensky_client import get_all_states
 from app.models import SystemStatus
-from app.zabbix_client import update_system_status, log_event
-from app import db    # ✅ ESTA ES LA BUENA
+from app.zabbix_client import update_system_status, log_event, send_telegram_alert
+from app import db, socketio    # usar Socket.IO para notificar al frontend
+from flask import current_app
 import time
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -56,15 +57,76 @@ def get_opensky_data():
 def zabbix_webhook():
     data = request.json
 
-    trigger = data.get('trigger')
-    value = data.get('value')
+    # Zabbix webhook: se espera un JSON con al menos 'trigger' y 'value'.
+    trigger = data.get('trigger') or data.get('trigger_name') or ''
+    value = data.get('value') or data.get('status') or ''
+    severity = data.get('severity') or data.get('priority') or ''
 
     if not trigger:
         return jsonify({"error": "invalid format"}), 400
-    
-    update_system_status(trigger, value)
 
+    # Guardar en DB (parámetro / valor) y loguear evento
+    update_system_status(trigger, value)
     log_event("ZABBIX_TRIGGER", f"{trigger} => {value}")
+
+    # Normalizar para detección de triggers específicos
+    t = (trigger or '').strip()
+    t_lower = t.lower()
+    v = (value or '').lower()
+    s = (severity or '').lower()
+
+    # Emitir notificación genérica al frontend
+    try:
+        socketio.emit('zabbix_event', {'message': f"{trigger} => {value}", 'severity': severity or None}, namespace='/', broadcast=True)
+    except Exception:
+        pass
+
+    # Trigger: API no responde -> marcar API como 'down' y emitir status_update (indicador rojo)
+    try:
+        # Prefer exact configurable trigger-name matching (case-insensitive)
+        api_down_names = [n.lower() for n in current_app.config.get('ZABBIX_TRIGGER_API_DOWN', [])]
+        matched_api_down = (t_lower in api_down_names) or (s and s in ('disaster', 'high', 'critical'))
+
+        # Fallback heuristic if no exact match
+        if not matched_api_down:
+            matched_api_down = ('api' in t_lower and ('no responde' in t_lower or 'caída' in t_lower or 'caida' in t_lower or 'down' in v or 'down' in t_lower))
+
+        if matched_api_down:
+            # Actualizar estado legible en la tabla de SystemStatus
+            update_system_status('api', 'down')
+            try:
+                socketio.emit('status_update', {'api': 'down'}, namespace='/', broadcast=True)
+            except Exception:
+                pass
+
+    except Exception:
+        # no bloquear el webhook si algo falla en el manejo de alerta
+        pass
+
+    # Trigger: exceso de vuelos -> reflejar alerta tipo Telegram en la app
+    try:
+        # Exact configurable trigger matching for Telegram-alert triggers
+        telegram_names = [n.lower() for n in current_app.config.get('ZABBIX_TRIGGER_TELEGRAM', [])]
+        matched_telegram = (t_lower in telegram_names)
+
+        # Fallback heuristic if no exact match
+        if not matched_telegram:
+            matched_telegram = (('exceso' in t_lower and 'vuelos' in t_lower) or ('exceso de vuelos' in t_lower) or ('vuelos' in t_lower and 'exceso' in t_lower))
+
+        if matched_telegram:
+            # Marcador simple para la UI (puede usarse para mostrar ícono)
+            update_system_status('zabbix_telegram_alert', '1')
+            try:
+                socketio.emit('zabbix_event', {'message': f"{trigger} => {value}", 'severity': 'info', 'icon': 'telegram'}, namespace='/', broadcast=True)
+                # Enviar notificación a Telegram si está configurado
+                try:
+                    send_telegram_alert(f"Alerta: {trigger}", f"Valor: {value}")
+                except Exception:
+                    pass
+            except Exception:
+                pass
+    except Exception:
+        pass
 
     return jsonify({"status": "ok"})
 
