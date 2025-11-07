@@ -29,9 +29,11 @@
           var ctx = chartEl.getContext('2d');
           flightsChart = new Chart(ctx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'Vuelos / min', data: [], borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,0.1)', tension:0.25 }] },
-            options: { responsive:true, scales:{x:{display:true}, y:{beginAtZero:true}} }
+            data: { labels: [], datasets: [{ label: 'Vuelos / min', data: [], borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,0.12)', tension:0.25, pointRadius:3, borderWidth:2 }] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true}}, scales:{x:{display:true}, y:{beginAtZero:true, suggestedMax:10, ticks:{stepSize:1}} } }
           });
+          // Seed chart with a baseline value so the UI shows a visible point even before socket data arrives
+          try{ pushChartPoint(0); }catch(e){}
         }catch(e){ flightsChart=null; }
       }
     })();
@@ -46,6 +48,8 @@
         flightsChart.update();
       }
       var avgEl = document.getElementById('avg-per-min'); if(avgEl) avgEl.textContent = value;
+      // Also update the home indicator element if present
+  var homeAvg = document.getElementById('avg-flights-min'); if(homeAvg) animateValueChange(homeAvg, value);
     }
 
     // State
@@ -119,12 +123,24 @@
 
     function updateHomeCards(){
       var total = Object.keys(currentFlights).length;
-      var activeEl = document.getElementById('active-flights-count'); if(activeEl) activeEl.textContent = total || '—';
+      var activeEl = document.getElementById('active-flights-count');
+      if(activeEl) animateValueChange(activeEl, total || '—');
       var airlines = new Set();
       Object.values(currentFlights).forEach(function(f){ var cs=(f.callsign||'').trim(); if(cs) airlines.add(cs.slice(0,3).toUpperCase()); });
-      var alEl = document.getElementById('active-airlines-count'); if(alEl) alEl.textContent = airlines.size || '—';
+      var alEl = document.getElementById('active-airlines-count'); if(alEl) animateValueChange(alEl, airlines.size || '—');
       var ltSrc = document.getElementById('last-trigger');
-      var ltSum = document.getElementById('last-trigger-summary'); if(ltSum) ltSum.textContent = ltSrc ? (ltSrc.textContent||'—') : '—';
+      var ltSum = document.getElementById('last-trigger-summary'); if(ltSum) animateValueChange(ltSum, ltSrc ? (ltSrc.textContent||'—') : '—');
+    }
+
+    function animateValueChange(el, newVal){
+      try{
+        var old = el.textContent;
+        if(String(old) !== String(newVal)){
+          el.classList.add('pulse-num');
+          el.textContent = newVal;
+          setTimeout(function(){ el.classList.remove('pulse-num'); }, 800);
+        }
+      }catch(e){}
     }
 
     // DataTables rendering
@@ -137,14 +153,24 @@
       var headers = Array.from(thead.querySelectorAll('th')).map(function(th){ return th.textContent.trim().toLowerCase(); });
       var hasLatLon = headers.indexOf('lat')>=0 && headers.indexOf('lon')>=0;
       var rowsHtml = '';
+      function badgeClassForType(type){
+        if(!type) return 'bg-secondary';
+        var t = String(type).toLowerCase();
+        if(t==='commercial' || t==='comercial') return 'badge-type';
+        if(t==='private' || t==='privado') return 'badge-type-private';
+        if(t==='business' || t==='empresarial') return 'badge-type-business';
+        return 'bg-secondary';
+      }
+
       (list||[]).forEach(function(f){
         var type = f.type || inferFlightType(f);
+        var badgeCls = badgeClassForType(type);
         var last = f.last_seen ? new Date(f.last_seen*1000).toLocaleTimeString() : '—';
         if(hasLatLon){
           rowsHtml += '<tr>'
             + '<td>'+(f.callsign||f.icao24||'—')+'</td>'
             + '<td>'+(f.icao24||'—')+'</td>'
-            + '<td><span class="badge bg-secondary">'+type+'</span></td>'
+            + '<td><span class="badge '+badgeCls+'">'+type+'</span></td>'
             + '<td>'+(f.origin||'—')+'</td>'
             + '<td>'+(f.destination||'—')+'</td>'
             + '<td class="text-end">'+(f.altitude!=null?Math.round(f.altitude):'—')+'</td>'
@@ -158,7 +184,7 @@
           rowsHtml += '<tr>'
             + '<td>'+(f.callsign||f.icao24||'—')+'</td>'
             + '<td>'+(f.icao24||'—')+'</td>'
-            + '<td><span class="badge bg-secondary">'+type+'</span></td>'
+            + '<td><span class="badge '+badgeCls+'">'+type+'</span></td>'
             + '<td>'+(f.origin||'—')+'</td>'
             + '<td>'+(f.destination||'—')+'</td>'
             + '<td class="text-end">'+(f.altitude!=null?Math.round(f.altitude):'—')+'</td>'
@@ -405,7 +431,32 @@
         }catch(ex){}
       });
       socket.on('status_update', function(s){ if(s.api) { setCard('api', s.api); updateApiIndicator(s.api); } if(s.db) setCard('db', s.db); if(s.backend) setCard('backend', s.backend); if(s.zabbix) setCard('zabbix', s.zabbix); });
-      socket.on('flights_per_min', function(n){ pushChartPoint(n); });
+      var _lastFlightsPerMinTs = Date.now();
+      socket.on('flights_per_min', function(n){
+        try{ _lastFlightsPerMinTs = Date.now(); }catch(e){}
+        pushChartPoint(n);
+      });
+      // Polling fallback: if we don't receive flights_per_min events for >12s, poll /api/opensky to estimate count
+      try{
+        setInterval(function(){
+          try{
+            if(Date.now() - _lastFlightsPerMinTs > 12000){
+              // Fetch a snapshot and use number of states as a fallback metric
+              // Use fixed BBOX for CDMX to avoid referencing variables before declaration
+              var url = '/api/opensky?lamin=18.90&lomin=-99.60&lamax=19.80&lomax=-98.90';
+              fetch(url).then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
+              .then(function(data){
+                var count = 0;
+                if(data && Array.isArray(data.states)){
+                  data.states.forEach(function(s){ if(s && s[6]!=null && s[5]!=null) count++; });
+                }
+                // use count as approximate flights/min fallback
+                pushChartPoint(count);
+              }).catch(function(){ /* ignore fallback errors */ });
+            }
+          }catch(e){}
+        }, 15000);
+      }catch(e){}
     } else {
       setTimeout(function(){ pushChartPoint(3); pushChartPoint(5); pushChartPoint(4); }, 600);
     }

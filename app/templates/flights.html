@@ -44,16 +44,38 @@
 					</select>
 				</div>
 				<div class="col-sm-12 col-md-4">
-					<label class="form-label small text-muted d-flex justify-content-between"><span>Altitud (m)</span><span class="text-muted small" id="alt-range-label">0 — 20000</span></label>
-					<div id="slider-alt"></div>
-					<input id="filter-alt-min" type="hidden" value="">
-					<input id="filter-alt-max" type="hidden" value="">
+					<div class="range-card">
+						<div class="range-icon" aria-hidden="true">
+							<!-- simple altitude SVG icon -->
+							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="svg-alt">
+								<path d="M12 2 L15 8 L12 6 L9 8 L12 2 Z" fill="#06b6d4" opacity="0.95"></path>
+								<path d="M4 20h16v-2H4v2z" fill="#0b74ff" />
+							</svg>
+						</div>
+						<div class="range-body">
+							<label class="form-label small text-muted d-flex justify-content-between"><span>Altitud (m)</span><span class="text-muted small" id="alt-range-label">0 — 20000</span></label>
+							<div id="slider-alt"></div>
+							<input id="filter-alt-min" type="hidden" value="">
+							<input id="filter-alt-max" type="hidden" value="">
+						</div>
+					</div>
 				</div>
 				<div class="col-sm-12 col-md-4">
-					<label class="form-label small text-muted d-flex justify-content-between"><span>Velocidad (m/s)</span><span class="text-muted small" id="speed-range-label">0 — 300</span></label>
-					<div id="slider-speed"></div>
-					<input id="filter-speed-min" type="hidden" value="">
-					<input id="filter-speed-max" type="hidden" value="">
+					<div class="range-card">
+						<div class="range-icon" aria-hidden="true">
+							<!-- simple speed SVG icon -->
+							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="svg-speed">
+								<path d="M3 12a9 9 0 1 0 18 0" stroke="#f97316" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+								<path d="M12 6v6l4 2" stroke="#fb7185" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						</div>
+						<div class="range-body">
+							<label class="form-label small text-muted d-flex justify-content-between"><span>Velocidad (m/s)</span><span class="text-muted small" id="speed-range-label">0 — 300</span></label>
+							<div id="slider-speed"></div>
+							<input id="filter-speed-min" type="hidden" value="">
+							<input id="filter-speed-max" type="hidden" value="">
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -62,7 +84,7 @@
 
 			<!-- Tabla de vuelos detallada debajo del mapa -->
 			<div class="table-responsive mt-3">
-				<table id="flights-table" class="table table-sm table-striped table-hover align-middle w-100">
+				<table id="flights-table" class="table table-sm table-striped table-hover align-middle w-100 flights-table">
 					<thead>
 						<tr>
 							<th>Callsign</th>

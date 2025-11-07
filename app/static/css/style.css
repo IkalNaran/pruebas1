@@ -63,13 +63,112 @@ nav a { text-decoration:none; margin:0 10px }
 .chart-card{flex:1;background:var(--panel);padding:12px;border-radius:10px}
 .table-card{width:360px;background:var(--panel);padding:12px;border-radius:10px}
 
+/* New monitoring layout helpers */
+.chart-fullcard{background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,255,0.95)); padding:18px; border-radius:12px; box-shadow:0 10px 30px rgba(11,116,255,0.04);}
+.table-fullcard{background:var(--panel); padding:12px; border-radius:12px; box-shadow:var(--soft-shadow);}
+.chart-fullcard h6{font-weight:700;color:var(--accent)}
+.chart-fullcard canvas{width:100% !important; height:auto !important; max-height:320px; min-height:220px}
+
+/* Make table full width and give it a max height so it can scroll independently */
+.table-fullcard .table-responsive{ max-height:520px }
+.table-fullcard .flights-table thead th{ background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(250,252,255,0.8)); }
+
 .events{max-height:260px;overflow:auto}
 .flights-table{width:100%;border-collapse:collapse}
 .flights-table thead th{ position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); z-index:2; }
 .flights-table th{ text-align:left;padding:10px;color:var(--muted);font-size:0.9rem;border-bottom:1px solid rgba(15,23,42,0.06)}
 .flights-table td{padding:10px;border-top:1px solid rgba(15,23,42,0.03);color:var(--text)}
-.flights-table tbody tr:hover{background:rgba(11,116,255,0.03)}
+.flights-table tbody tr:hover{background:rgba(11,116,255,0.04); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(11,116,255,0.04);}
+.flights-table tbody tr{ transition: background-color 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
+.flights-table tbody tr{ cursor: pointer; }
+.flights-table tbody tr td:first-child{ font-weight:700; color: var(--text); }
+.flights-table tbody tr td{ vertical-align: middle; }
+
+/* Make badges in the flights table more distinctive and pill-shaped */
+.flights-table .badge{ padding:6px 8px; border-radius:999px; font-weight:600; color:#fff; background: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 18px rgba(11,116,255,0.08); }
+.flights-table .badge.bg-secondary{ background: linear-gradient(90deg, var(--accent), var(--accent-2)); color:#fff; }
+
+/* Slightly reduce header padding and increase contrast */
+.flights-table thead th{ padding:12px 10px; letter-spacing:0.15px; font-weight:700; color:var(--muted); }
+.flights-table thead th:first-child{ border-top-left-radius:8px }
+.flights-table thead th:last-child{ border-top-right-radius:8px }
+
+/* Make numeric columns right aligned for readability */
+.flights-table td.text-end{ font-variant-numeric: tabular-nums; }
+
+/* Legend styles */
+.table-fullcard .legend-item{ color:var(--muted); margin-right:6px; }
+.table-fullcard .badge-type{ background: linear-gradient(90deg,#0b74ff,#06b6d4); color:#fff; padding:6px 8px; border-radius:999px; font-weight:600; }
+.table-fullcard .badge-type-private{ background: linear-gradient(90deg,#f97316,#fb7185); }
+.table-fullcard .badge-type-business{ background: linear-gradient(90deg,#8b5cf6,#4f46e5); }
+
+/* Improve scroll visual: add inner padding and subtle separator */
+.table-fullcard .table-responsive{ padding-right:6px; }
+
+/* Dark theme adjustments: ensure hover and badges look good */
+html[data-theme="dark"] .flights-table tbody tr:hover{ background: rgba(255,255,255,0.02); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+html[data-theme="dark"] .flights-table .badge{ box-shadow: none; opacity:0.98 }
+
+/* Ensure table text is readable in dark theme */
+html[data-theme="dark"] .flights-table td,
+html[data-theme="dark"] #flights-table td { color: var(--text) !important; }
+html[data-theme="dark"] .flights-table thead th,
+html[data-theme="dark"] #flights-table thead th { color: var(--muted) !important; }
+
+/* Accessibility: increase focus outline when keyboard-navigating rows */
+.flights-table tbody tr:focus, .flights-table tbody tr:focus-within{ outline: 3px solid rgba(11,116,255,0.12); outline-offset: -2px; }
 .flights-table tbody tr td{transition:background-color 160ms ease}
+
+/* Range card used for sliders (altitude / speed) */
+.range-card{ display:flex; gap:12px; align-items:flex-start; padding:8px; border-radius:10px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.02); }
+.range-card .range-icon{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; flex:0 0 36px; }
+.range-card .range-icon svg{ display:block; filter: drop-shadow(0 6px 14px rgba(2,6,23,0.25)); transform-origin:center; }
+.range-card .range-body{ flex:1 }
+
+/* Add spacing between the two range cards on small devices */
+@media (max-width:768px){ .range-card{ margin-bottom:8px } }
+
+/* Indicator badge animation for monitoring page */
+.indicator-badge i{ animation: float 3.5s ease-in-out infinite; display:inline-flex; align-items:center; justify-content:center }
+@keyframes float{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-4px) } }
+
+/* subtle pulse on status dot */
+.status-indicator .dot{ animation: pulse 2.4s infinite; }
+@keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(11,116,255,0.08) } 50%{ box-shadow:0 0 0 8px rgba(11,116,255,0.02) } 100%{ box-shadow:0 0 0 0 rgba(11,116,255,0.00) } }
+
+/* Decoration for indicator icons: give a soft glow */
+.indicator-badge i{ border-radius:50%; padding:6px; box-shadow:0 8px 24px rgba(11,116,255,0.06); }
+
+/* Different tiny animation colors per badge (if needed) */
+.indicator-badge .fa-cloud{ color:#ffffff }
+.indicator-badge .fa-database{ color:#ffffff }
+.indicator-badge .fa-server{ color:#ffffff }
+.indicator-badge .fa-bell{ color:#ffffff }
+
+/* Make the monitoring card indicators more illustrative on dark theme */
+html[data-theme="dark"] .indicator-badge{ background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); }
+
+/* Home page indicator cards */
+.home-indicator{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:18px; min-height:120px; }
+.home-indicator .indicator-badge{ width:56px; height:56px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; }
+.home-indicator .home-value{ font-size:1.6rem; font-weight:800; color:var(--text); }
+
+/* subtle entrance for numbers */
+.home-value{ animation: rise 700ms ease both; }
+@keyframes rise{ from{ transform: translateY(6px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
+
+/* small pulse ring for indicator badges */
+.indicator-badge::after{ content:""; position:absolute; display:block; width:56px; height:56px; border-radius:50%; z-index:-1; left:50%; top:50%; transform:translate(-50%,-50%); opacity:0; transition:opacity .35s ease; }
+.home-indicator .indicator-badge:hover::after{ opacity:1; box-shadow:0 10px 30px rgba(11,116,255,0.06); }
+
+/* make sure icons inside indicator are visible in dark mode */
+html[data-theme="dark"] .home-indicator .indicator-badge i{ color:#fff !important }
+
+/* pulse animation used when values update */
+.pulse-num{ animation: pulse-up 700ms ease both; }
+@keyframes pulse-up{ 0%{ transform: translateY(6px) scale(0.98); opacity:0 } 60%{ transform: translateY(-4px) scale(1.08); opacity:1 } 100%{ transform: translateY(0) scale(1); opacity:1 } }
+
+
 
 /* Filters (Bootstrap already provides inputs) */
 .filters label{display:block;font-size:0.82rem;color:var(--muted);margin-top:8px}
@@ -105,7 +204,7 @@ html[data-theme="dark"] .noUi-handle{ background: #0f172a }
 .status-indicator.status-ok .dot{background:var(--accent)}
 .status-indicator.status-warn .dot{background:#f59e0b}
 .status-indicator.status-down .dot{background:#ef4444}
-.status-indicator.status-unknown .dot{background:#9ca3af}
+.status-indicator.status-unknown .dot{background:#387df5}
 .status-indicator .last-checked{color:var(--muted);font-size:0.85rem;margin-left:8px}
 
 /* Card and UI polish */
@@ -143,6 +242,124 @@ html[data-theme="dark"]{
 /* Dark theme table header stickiness color */
 html[data-theme="dark"] .flights-table thead th{ background: rgba(7,18,38,0.95); }
 
+/* Improved dark theme tweaks for better contrast and aesthetics */
+html[data-theme="dark"] body{ background: linear-gradient(180deg,#040611,#07101a); }
+html[data-theme="dark"] .chart-fullcard{ background: linear-gradient(180deg, rgba(6,10,20,0.6), rgba(3,7,12,0.5)); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+html[data-theme="dark"] .chart-fullcard h6{ color: var(--accent); }
+html[data-theme="dark"] .table-fullcard{ background: #091022; border:1px solid rgba(255,255,255,0.03); }
+
+/* Strong overrides for DataTables / Bootstrap table stripes in dark mode
+   Ensure rows are subtly contrasted and text is clearly readable. */
+html[data-theme="dark"] .table,
+html[data-theme="dark"] .table-responsive,
+html[data-theme="dark"] .table-fullcard .table-responsive,
+html[data-theme="dark"] .flights-table,
+html[data-theme="dark"] #flights-table {
+    background: transparent !important;
+    color: var(--text) !important;
+}
+
+/* Normalize row backgrounds: even transparent, odd a very subtle tint */
+html[data-theme="dark"] .flights-table tbody tr,
+html[data-theme="dark"] #flights-table tbody tr{
+    background: transparent !important;
+}
+html[data-theme="dark"] .flights-table tbody tr.odd,
+html[data-theme="dark"] .flights-table tbody tr:nth-child(odd),
+html[data-theme="dark"] #flights-table tbody tr.odd,
+html[data-theme="dark"] #flights-table tbody tr:nth-child(odd){
+    background: rgba(255,255,255,0.02) !important;
+}
+html[data-theme="dark"] .flights-table tbody tr.even,
+html[data-theme="dark"] .flights-table tbody tr:nth-child(even),
+html[data-theme="dark"] #flights-table tbody tr.even,
+html[data-theme="dark"] #flights-table tbody tr:nth-child(even){
+    background: transparent !important;
+}
+
+/* Force readable text color on cells and headers */
+html[data-theme="dark"] .flights-table td,
+html[data-theme="dark"] #flights-table td{ color: var(--text) !important; }
+html[data-theme="dark"] .flights-table thead th,
+html[data-theme="dark"] #flights-table thead th{ color: var(--muted) !important; }
+
+/* Reduce hover shadow in dark so it doesn't create bright artifacts */
+html[data-theme="dark"] .flights-table tbody tr:hover,
+html[data-theme="dark"] #flights-table tbody tr:hover{ background: rgba(255,255,255,0.03) !important; box-shadow: 0 6px 16px rgba(0,0,0,0.6) !important; }
+
+/* DataTables sometimes applies .odd/.even classes — ensure contrast */
+html[data-theme="dark"] .flights-table tbody tr.odd td,
+html[data-theme="dark"] .flights-table tbody tr.even td{ color: var(--text) !important; }
+
+/* Extra strong overrides to neutralize DataTables / Bootstrap white stripes and
+   any background-image that causes washed-out rows in dark mode. These use
+   high-specificity selectors and !important to ensure dark theme visibility. */
+html[data-theme="dark"] .table,
+html[data-theme="dark"] .table-responsive,
+html[data-theme="dark"] .table-fullcard,
+html[data-theme="dark"] .dataTables_wrapper,
+html[data-theme="dark"] .dataTables_scrollBody,
+html[data-theme="dark"] .dataTables_scrollHeadInner,
+html[data-theme="dark"] .dataTables_scrollHead,
+html[data-theme="dark"] .dataTables_scrollFoot{
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* Ensure the table element itself doesn't show a white background */
+html[data-theme="dark"] table.table,
+html[data-theme="dark"] table.table thead,
+html[data-theme="dark"] table.table tbody,
+html[data-theme="dark"] #flights-table,
+html[data-theme="dark"] .flights-table{
+    background: transparent !important;
+}
+
+/* Remove any white striping and force subtle dark tint for odd rows */
+html[data-theme="dark"] .table.table-striped tbody tr,
+html[data-theme="dark"] .flights-table tbody tr{
+    background: transparent !important;
+}
+html[data-theme="dark"] .table.table-striped tbody tr:nth-child(odd),
+html[data-theme="dark"] .flights-table tbody tr:nth-child(odd){
+    background: rgba(255,255,255,0.02) !important; /* subtle contrast */
+}
+
+/* Force readable colors on all cells and headers */
+html[data-theme="dark"] .table td,
+html[data-theme="dark"] .table th,
+html[data-theme="dark"] .flights-table td,
+html[data-theme="dark"] .flights-table th,
+html[data-theme="dark"] #flights-table td,
+html[data-theme="dark"] #flights-table th{
+    color: var(--text) !important;
+    background: transparent !important;
+}
+
+/* Remove bright shadows and heavy transforms that cause bright bands */
+html[data-theme="dark"] .flights-table tbody tr,
+html[data-theme="dark"] #flights-table tbody tr{
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Slightly darken the table container to separate it from the page */
+html[data-theme="dark"] .table-fullcard{
+    background: linear-gradient(180deg, rgba(8,12,20,0.6), rgba(6,10,16,0.6)) !important;
+}
+
+
+
+/* Illustrations / Icon badges for indicators */
+.indicator-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(90deg, rgba(11,116,255,0.08), rgba(6,182,212,0.04));border:1px solid rgba(11,116,255,0.06);font-weight:700}
+.indicator-badge i{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 18px rgba(11,116,255,0.12)}
+html[data-theme="dark"] .indicator-badge{ background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03) }
+
+/* Make monitoring right panel elements more illustrative */
+.right-panel .events div{ padding:8px 10px; border-radius:8px; margin-bottom:6px; background: linear-gradient(90deg, rgba(11,116,255,0.03), rgba(255,255,255,0.01)); }
+html[data-theme="dark"] .right-panel .events div{ background: rgba(255,255,255,0.02) }
+
 /* Dark theme outlines */
 html[data-theme="dark"] .btn-outline-secondary{ color: #c3ced9; border-color: rgba(230,237,243,0.18); }
 
@@ -158,7 +375,7 @@ html[data-theme="dark"] .btn-outline-secondary{ color: #c3ced9; border-color: rg
     z-index: 1100;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    background: linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255,255,255,0.88));
+    background: linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255, 255, 255, 0.88));
     border-bottom: 1px solid var(--card-border);
     box-shadow: 0 8px 28px rgba(11,116,255,0.06);
     margin-bottom: 0;

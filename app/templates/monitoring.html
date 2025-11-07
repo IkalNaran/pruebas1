@@ -24,30 +24,42 @@
 			<div class="row g-3">
 				<div class="col-12">
 					<div class="row g-3">
-									<div class="col-sm-6 col-lg-3">
-										<div class="card p-2">
-											<small class="text-muted">API OpenSky</small>
-											<div id="api-status" class="fs-5">—</div>
-										</div>
-									</div>
-									<div class="col-sm-6 col-lg-3">
-										<div class="card p-2">
-											<small class="text-muted">Base de datos</small>
-											<div id="db-status" class="fs-5">—</div>
-										</div>
-									</div>
-									<div class="col-sm-6 col-lg-3">
-										<div class="card p-2">
-											<small class="text-muted">Backend</small>
-											<div id="backend-status" class="fs-5">—</div>
-										</div>
-									</div>
-									<div class="col-sm-6 col-lg-3">
-										<div class="card p-2">
-											<small class="text-muted">Zabbix</small>
-											<div id="zabbix-status" class="fs-5">—</div>
-										</div>
-									</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card p-2 d-flex align-items-center gap-2">
+								<div class="indicator-badge"><i class="fa-solid fa-cloud"></i></div>
+								<div>
+									<small class="text-muted">API OpenSky</small>
+									<div id="api-status" class="fs-5">—</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card p-2 d-flex align-items-center gap-2">
+								<div class="indicator-badge"><i class="fa-solid fa-database"></i></div>
+								<div>
+									<small class="text-muted">Base de datos</small>
+									<div id="db-status" class="fs-5">—</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card p-2 d-flex align-items-center gap-2">
+								<div class="indicator-badge"><i class="fa-solid fa-server"></i></div>
+								<div>
+									<small class="text-muted">Backend</small>
+									<div id="backend-status" class="fs-5">—</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-6 col-lg-3">
+							<div class="card p-2 d-flex align-items-center gap-2">
+								<div class="indicator-badge"><i class="fa-solid fa-bell"></i></div>
+								<div>
+									<small class="text-muted">Zabbix</small>
+									<div id="zabbix-status" class="fs-5">—</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -111,12 +123,33 @@
 				</aside>
 
 				<div class="col-12">
+					<!-- Chart full width above the flights table -->
+					<div class="row g-3 mb-3">
+						<div class="col-12">
+							<div class="card p-3 chart-fullcard">
+								<div class="d-flex justify-content-between align-items-center mb-2">
+									<h6 class="mb-0">Vuelos por minuto</h6>
+									<div class="text-muted small">Últimos 60 puntos</div>
+								</div>
+								<canvas id="flightsChart" height="120"></canvas>
+							</div>
+						</div>
+					</div>
+
+					<!-- Flights table full width below the chart -->
 					<div class="row g-3">
-						<div class="col-lg-6">
-							<div class="card p-3">
+						<div class="col-12">
+							<div class="card p-3 table-fullcard">
 								<h6 class="mb-2">Vuelos activos</h6>
-								<div class="table-responsive">
-									<table id="flights-table" class="table table-sm table-striped table-hover align-middle w-100">
+								<!-- Legend for badge types -->
+								<div class="mb-2 small text-muted d-flex gap-2 align-items-center">
+									<span class="legend-item">Tipos:</span>
+									<span class="badge badge-type">Comercial</span>
+									<span class="badge badge-type badge-type-private">Privado</span>
+									<span class="badge badge-type badge-type-business">Empresarial</span>
+								</div>
+								<div class="table-responsive" style="max-height:440px; overflow:auto;">
+									<table id="flights-table" class="table table-sm table-striped table-hover align-middle w-100 flights-table">
 										<thead>
 											<tr>
 												<th>Callsign</th>
@@ -137,12 +170,6 @@
 										</tbody>
 									</table>
 								</div>
-							</div>
-						</div>
-						<div class="col-lg-6">
-							<div class="card p-3 h-100">
-								<h6 class="mb-2">Vuelos por minuto</h6>
-								<canvas id="flightsChart" height="160"></canvas>
 							</div>
 						</div>
 					</div>

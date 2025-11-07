@@ -158,3 +158,24 @@ def db_test():
         return jsonify({"status": "ok", "rows": len(rows)})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@api_bp.route('/debug/emit_fpm/<int:count>', methods=['GET'])
+def debug_emit_fpm(count):
+    """
+    Dev-only debug route to emit a `flights_per_min` Socket.IO event.
+    Only active when Flask app is running in DEBUG mode (to avoid accidental exposure).
+
+    Usage (dev): GET /debug/emit_fpm/5
+    Emits: socketio.emit('flights_per_min', {'value': count})
+    """
+    # Only allow in debug mode to reduce accidental exposure in production
+    if not current_app.config.get('DEBUG', False):
+        return jsonify({'error': 'debug route disabled'}), 403
+
+    try:
+        # Broadcast the synthetic metric so clients update chart & homepage indicator
+        socketio.emit('flights_per_min', {'value': int(count)}, namespace='/', broadcast=True)
+        return jsonify({'status': 'ok', 'emitted': int(count)})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
