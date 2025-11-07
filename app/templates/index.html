@@ -1,6 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Inicio - Zabbix Flights{% endblock %}
 {% block content %}
-<h2>Bienvenido</h2>
-<p>Esta es la página principal del panel de monitoreo de vuelos y Zabbix.</p>
+<div class="row g-3">
+	<div class="col-12">
+		<h2 class="mb-2">Bienvenido</h2>
+		<p class="text-muted">Panel de monitoreo de vuelos y Zabbix.</p>
+	</div>
+
+	<div class="col-sm-6 col-md-3">
+		<div class="card p-3 text-center">
+			<div class="h5" id="active-flights-count">—</div>
+			<div class="text-muted small">Vuelos activos</div>
+		</div>
+	</div>
+	<div class="col-sm-6 col-md-3">
+		<div class="card p-3 text-center">
+			<div class="h5" id="active-airlines-count">—</div>
+			<div class="text-muted small">Aerolíneas activas</div>
+		</div>
+	</div>
+	<div class="col-sm-6 col-md-3">
+		<div class="card p-3 text-center">
+			<div class="h5" id="avg-flights-min">—</div>
+			<div class="text-muted small">Promedio /min</div>
+		</div>
+	</div>
+	<div class="col-sm-6 col-md-3">
+		<div class="card p-3 text-center">
+			<div class="h5" id="last-trigger-summary">—</div>
+			<div class="text-muted small">Último trigger Zabbix</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+	<!-- Optional: Socket.IO for real-time updates on home cards -->
+	<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+	<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

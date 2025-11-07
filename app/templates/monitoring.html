@@ -1,107 +1,166 @@
 {% extends "base.html" %}
 {% block title %}Monitoreo Zabbix{% endblock %}
+
+{% block head_extra %}
+	<!-- Optional map/chart CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+	<!-- DataTables Bootstrap 5 CSS -->
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+	<!-- noUiSlider CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" />
+{% endblock %}
+
 {% block content %}
-<!-- Dashboard layout: navbar cards, large map, bottom panel with charts and events -->
-<div class="dashboard-container">
-	<div class="system-status">
-		<div id="api-indicator" class="status-indicator status-unknown">
-			<span class="dot"></span>
-			<span id="api-indicator-text">API OpenSky: desconocido</span>
-			<span id="api-last-checked" class="last-checked"></span>
-		</div>
-	</div>
-	<section class="top-row">
-		<div class="status-cards">
-			<div class="card" id="card-api">
-				<div class="card-title">API OpenSky</div>
-				<div class="card-value" id="api-status">—</div>
+	<div class="card">
+		<div class="card-body">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<div id="api-indicator" class="status-indicator status-unknown d-flex align-items-center gap-2">
+					<span class="dot"></span>
+					<small id="api-indicator-text" class="text-muted">API OpenSky: desconocido</small>
+				</div>
+				<div class="text-end text-muted small">Última actualización: <span id="api-last-checked">—</span></div>
 			</div>
-			<div class="card" id="card-db">
-				<div class="card-title">Base de datos</div>
-				<div class="card-value" id="db-status">—</div>
-			</div>
-			<div class="card" id="card-backend">
-				<div class="card-title">Backend</div>
-				<div class="card-value" id="backend-status">—</div>
-			</div>
-			<div class="card" id="card-zabbix">
-				<div class="card-title">Zabbix</div>
-				<div class="card-value" id="zabbix-status">—</div>
-			</div>
-		</div>
-	</section>
 
-	<section class="main-area">
-		<div id="map" class="map"></div>
-
-		<aside class="right-panel">
-			<h3>Resumen</h3>
-			<ul class="summary-list">
-				<li>Total vuelos activos: <strong id="total-flights">0</strong></li>
-				<li>Promedio /min: <strong id="avg-per-min">0</strong></li>
-				<li>Último trigger: <span id="last-trigger">—</span></li>
-			</ul>
-
-				<h4>Filtros</h4>
-				<div class="filters">
-					<label for="filter-airline">Aerolínea / Callsign</label>
-					<select id="filter-airline">
-						<option value="">Todas</option>
-					</select>
-
-					<label for="filter-alt-min">Altitud mínima (m)</label>
-					<input id="filter-alt-min" type="number" placeholder="0" />
-
-					<label for="filter-alt-max">Altitud máxima (m)</label>
-					<input id="filter-alt-max" type="number" placeholder="20000" />
-
-					<div style="margin-top:8px;display:flex;gap:8px;">
-						<button id="apply-filters">Aplicar</button>
-						<button id="clear-filters">Limpiar</button>
+			<div class="row g-3">
+				<div class="col-12">
+					<div class="row g-3">
+									<div class="col-sm-6 col-lg-3">
+										<div class="card p-2">
+											<small class="text-muted">API OpenSky</small>
+											<div id="api-status" class="fs-5">—</div>
+										</div>
+									</div>
+									<div class="col-sm-6 col-lg-3">
+										<div class="card p-2">
+											<small class="text-muted">Base de datos</small>
+											<div id="db-status" class="fs-5">—</div>
+										</div>
+									</div>
+									<div class="col-sm-6 col-lg-3">
+										<div class="card p-2">
+											<small class="text-muted">Backend</small>
+											<div id="backend-status" class="fs-5">—</div>
+										</div>
+									</div>
+									<div class="col-sm-6 col-lg-3">
+										<div class="card p-2">
+											<small class="text-muted">Zabbix</small>
+											<div id="zabbix-status" class="fs-5">—</div>
+										</div>
+									</div>
 					</div>
 				</div>
 
-				<h4>Eventos Zabbix</h4>
-				<div id="events" class="events"></div>
-		</aside>
-	</section>
+				<div class="col-12 col-lg-8">
+					<div id="map" class="map" style="height:60vh; min-height:420px;"></div>
+				</div>
 
-	<section class="bottom-panel">
-		<div class="chart-card">
-			<canvas id="flightsChart" height="120"></canvas>
+				<aside class="col-12 col-lg-4">
+					<div class="mb-3">
+						<h5>Resumen</h5>
+						<ul class="list-unstyled text-muted">
+							<li>Total vuelos activos: <strong id="total-flights">0</strong></li>
+							<li>Promedio /min: <strong id="avg-per-min">0</strong></li>
+							<li>Último trigger: <span id="last-trigger">—</span></li>
+						</ul>
+					</div>
+
+					<div class="mb-3">
+						<h6>Filtros</h6>
+						<div class="filters">
+							<label for="filter-type" class="form-label">Tipo</label>
+							<select id="filter-type" class="form-select form-select-sm mb-2">
+								<option value="">Todos</option>
+								<option value="commercial">Comercial</option>
+								<option value="private">Privado</option>
+								<option value="business">Empresarial</option>
+								<option value="unknown">Desconocido</option>
+							</select>
+
+							<label for="filter-airline" class="form-label">Aerolínea / Callsign</label>
+							<select id="filter-airline" class="form-select form-select-sm mb-2">
+								<option value="">Todas</option>
+							</select>
+
+							<label class="form-label d-flex justify-content-between"><span>Altitud (m)</span> <span class="text-muted small" id="alt-range-label">0 — 20000</span></label>
+							<div id="slider-alt"></div>
+							<input id="filter-alt-min" type="hidden" value="">
+							<input id="filter-alt-max" type="hidden" value="">
+
+							<label class="form-label d-flex justify-content-between mt-2"><span>Velocidad (m/s)</span> <span class="text-muted small" id="speed-range-label">0 — 300</span></label>
+							<div id="slider-speed"></div>
+							<input id="filter-speed-min" type="hidden" value="">
+							<input id="filter-speed-max" type="hidden" value="">
+
+							<!-- Chips de filtros activos -->
+							<div id="filter-chips" class="mb-3"></div>
+
+							<div class="d-flex gap-2">
+								<button id="apply-filters" class="btn btn-primary btn-sm flex-fill">Aplicar</button>
+								<button id="clear-filters" class="btn btn-outline-secondary btn-sm flex-fill">Limpiar</button>
+							</div>
+						</div>
+					</div>
+
+					<div>
+						<h6>Eventos Zabbix</h6>
+						<div id="events" class="events small text-muted" style="max-height:240px;overflow:auto"></div>
+					</div>
+				</aside>
+
+				<div class="col-12">
+					<div class="row g-3">
+						<div class="col-lg-6">
+							<div class="card p-3">
+								<h6 class="mb-2">Vuelos activos</h6>
+								<div class="table-responsive">
+									<table id="flights-table" class="table table-sm table-striped table-hover align-middle w-100">
+										<thead>
+											<tr>
+												<th>Callsign</th>
+												<th>ICAO24</th>
+												<th>Tipo</th>
+												<th>Origen</th>
+												<th>Destino</th>
+												<th>Alt</th>
+												<th>Vel</th>
+												<th>Heading</th>
+												<th>Lat</th>
+												<th>Lon</th>
+												<th>Últ.</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr><td colspan="11" class="text-muted">Cargando...</td></tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="card p-3 h-100">
+								<h6 class="mb-2">Vuelos por minuto</h6>
+								<canvas id="flightsChart" height="160"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="table-card">
-			<h4>Tabla de vuelos</h4>
-			<div id="flights-table">Cargando...</div>
-		</div>
-	</section>
-</div>
+	</div>
+{% endblock %}
 
-<!-- Include required libs from CDN: Leaflet, Chart.js, Socket.IO -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
-<!-- Dashboard behaviour -->
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-
-<style>
-/* Minimal dashboard styles - you can move these to css/style.css */
-.dashboard-container{display:flex;flex-direction:column;gap:16px;padding:12px}
-.status-cards{display:flex;gap:12px}
-.card{background:#0f1720;color:#fff;padding:10px;border-radius:8px;flex:1}
-.card-title{font-size:0.9rem;color:#9ca3af}
-.card-value{font-size:1.4rem;margin-top:6px}
-.main-area{display:flex;gap:12px}
-.map{flex:1;height:560px;border-radius:8px;overflow:hidden}
-.right-panel{width:300px;background:#071126;color:#fff;padding:12px;border-radius:8px}
-.bottom-panel{display:flex;gap:12px}
-.chart-card{flex:1;background:#071126;padding:12px;border-radius:8px}
-.table-card{width:360px;background:#071126;padding:12px;border-radius:8px}
-.events{max-height:240px;overflow:auto}
-/* responsive */
-@media (max-width:900px){.main-area{flex-direction:column}.right-panel{width:100%}.map{height:420px}}
-</style>
-
+{% block body_extra %}
+	<!-- Leaflet, Chart.js and Socket.IO -->
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+	<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+	<!-- jQuery + DataTables (BS5) for the monitoring table -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3VSW3k5Q4hXQvZ2Q5Z3yZ6kaPZq5smXKk=" crossorigin="anonymous"></script>
+	<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+	<!-- DataTables Buttons removed: clean table UI without toolbar -->
+	<!-- noUiSlider -->
+	<script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+	<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}
