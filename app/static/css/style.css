@@ -1,25 +1,181 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #fafafa;
-    color: #333;
-    margin: 0;
-    padding: 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
-header, footer {
-    background: #004b8d;
-    color: white;
-    padding: 10px;
+:root{
+    --bg:#f4f7fb; /* page background */
+    --panel:#ffffff; /* panels/cards */
+    --muted:#657080; /* subdued text */
+    --accent:#0b74ff; /* primary accent (friendly blue) */
+    --accent-2:#06b6d4; /* secondary accent (teal) */
+    --card:#ffffff;
+    --card-border:rgba(11,116,255,0.08);
+    --glass: rgba(255,255,255,0.6);
+    --soft-shadow: 0 8px 24px rgba(12,20,35,0.06);
+    --text:#071123; /* primary text color */
 }
+html,body{height:100%}
+body{
+    font-family: 'Inter', system-ui, -apple-system, Arial, sans-serif;
+    background: linear-gradient(180deg,var(--bg), #ffffff);
+    color: var(--text);
+    margin:0;padding:0;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+header, footer{background:var(--panel);color:var(--muted);padding:12px 18px}
+header h1{margin:0;font-size:1.1rem;color:var(--accent)}
+/* nav */
+/* navbar - Bootstrap provides most, use small overrides */
+.navbar-brand{font-weight:700;color:var(--accent);letter-spacing:0.2px}
+.navbar{box-shadow: 0 6px 18px rgba(11,116,255,0.04);border-radius:10px}
+.navbar .nav-link.active{color:var(--accent) !important;font-weight:600}
+.navbar .nav-link{color:var(--muted) !important;padding:6px 10px;border-radius:8px;transition:all .18s ease; position:relative}
+.navbar .nav-link::after{content:""; position:absolute; left:10px; right:10px; bottom:6px; height:2px; background: var(--accent); transform: scaleX(0); transform-origin:left; transition: transform .2s ease; opacity:.8}
+.navbar .nav-link:hover::after,.navbar .nav-link.active::after{ transform: scaleX(1); }
+.navbar-light .navbar-nav .nav-link, .navbar-dark .navbar-nav .nav-link{padding:6px 10px;border-radius:8px}
 
-nav a {
-    color: white;
-    text-decoration: none;
-    margin: 0 10px;
-}
+.main-nav{display:flex;gap:14px;align-items:center;margin-top:6px}
+.main-nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px;transition:all .15s ease}
+.main-nav a:hover{background:rgba(11,116,255,0.06);color:var(--accent)}
+.main-nav a.active{background:linear-gradient(90deg, rgba(11,116,255,0.08), rgba(6,182,212,0.04));color:var(--accent);border:1px solid rgba(11,116,255,0.08)}
+
+main{padding:12px}
+
+nav a { text-decoration:none; margin:0 10px }
 
 #map {
-    border: 2px solid #004b8d;
-    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
     margin-top: 10px;
+    background: linear-gradient(180deg, #ffffff, #fbfdff);
+    box-shadow: var(--soft-shadow);
+}
+/* Dashboard specific */
+.dashboard-container{max-width:1200px;margin:8px auto}
+.status-cards{display:flex;gap:12px}
+.card{background:var(--card);color:var(--text);padding:14px;border-radius:12px;flex:1;border:1px solid var(--card-border);box-shadow:var(--soft-shadow)}
+.card-title{font-size:0.85rem;color:var(--muted);font-weight:600}
+.card-value{font-size:1.45rem;margin-top:6px;color:var(--accent);font-weight:700}
+
+.main-area{display:flex;gap:12px}
+.map{flex:1;height:560px;border-radius:12px;box-shadow:var(--soft-shadow)}
+.map-large{height:720px}
+.right-panel{width:340px;background:var(--panel);color:var(--muted);padding:14px;border-radius:10px;border:1px solid rgba(2,6,23,0.03)}
+.bottom-panel{display:flex;gap:12px;margin-top:12px}
+.chart-card{flex:1;background:var(--panel);padding:12px;border-radius:10px}
+.table-card{width:360px;background:var(--panel);padding:12px;border-radius:10px}
+
+.events{max-height:260px;overflow:auto}
+.flights-table{width:100%;border-collapse:collapse}
+.flights-table thead th{ position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(4px); z-index:2; }
+.flights-table th{ text-align:left;padding:10px;color:var(--muted);font-size:0.9rem;border-bottom:1px solid rgba(15,23,42,0.06)}
+.flights-table td{padding:10px;border-top:1px solid rgba(15,23,42,0.03);color:var(--text)}
+.flights-table tbody tr:hover{background:rgba(11,116,255,0.03)}
+.flights-table tbody tr td{transition:background-color 160ms ease}
+
+/* Filters (Bootstrap already provides inputs) */
+.filters label{display:block;font-size:0.82rem;color:var(--muted);margin-top:8px}
+.filters select,.filters input{width:100%;padding:9px;border-radius:8px;border:1px solid rgba(15,23,42,0.06);background:transparent;color:var(--text)}
+.filters #slider-alt{ margin-top:10px; margin-bottom:26px; }
+.filters #slider-speed{ margin-top:10px; margin-bottom:26px; }
+.filters .form-label .small{ opacity:0.8 }
+.filters .btn{min-height:38px;border-radius:8px}
+
+/* noUiSlider aesthetic tweaks */
+.noUi-target{border:0; box-shadow:var(--soft-shadow); background:rgba(15,23,42,0.06); border-radius:10px}
+.noUi-connect{background: linear-gradient(90deg, var(--accent), var(--accent-2));}
+.noUi-handle{border:0; box-shadow:0 4px 14px rgba(0,0,0,0.12); background:#fff; border-radius:10px}
+html[data-theme="dark"] .noUi-target{ background: rgba(255,255,255,0.06) }
+html[data-theme="dark"] .noUi-handle{ background: #0f172a }
+
+/* Filter chips */
+#filter-chips{ display:flex; flex-wrap:wrap; gap:8px }
+.chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(11,116,255,0.08); color:var(--text); border:1px solid var(--card-border); font-size:0.85rem }
+.chip .close{ cursor:pointer; opacity:.7 }
+.chip .close:hover{ opacity:1 }
+
+/* plane div icon tweaks */
+.plane-div-icon{display:flex;align-items:center;justify-content:center}
+.plane-div-icon svg{filter:drop-shadow(0 6px 18px rgba(11,116,255,0.06));transition:transform 0.9s linear}
+/* Smooth marker movement (Leaflet positions via translate3d on element) */
+.leaflet-marker-icon{transition:transform 0.9s cubic-bezier(.2,.9,.2,1);will-change:transform}
+
+/* API status indicator */
+.system-status{display:flex;justify-content:flex-start}
+.status-indicator{display:inline-flex;align-items:center;gap:8px;background:var(--panel);padding:8px 12px;border-radius:12px;border:1px solid rgba(15,23,42,0.03);box-shadow:0 6px 18px rgba(12,20,35,0.04)}
+.status-indicator .dot{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:0 0 10px rgba(11,116,255,0.06)}
+.status-indicator.status-ok .dot{background:var(--accent)}
+.status-indicator.status-warn .dot{background:#f59e0b}
+.status-indicator.status-down .dot{background:#ef4444}
+.status-indicator.status-unknown .dot{background:#9ca3af}
+.status-indicator .last-checked{color:var(--muted);font-size:0.85rem;margin-left:8px}
+
+/* Card and UI polish */
+/* Card and UI polish for light theme */
+.card.bg-dark{background:linear-gradient(180deg, #0f1720, rgba(2,6,23,0.6)); border:1px solid var(--card-border)}
+.btn-primary, .btn-success{background:var(--accent);border-color:transparent;color:#fff; box-shadow:0 8px 18px rgba(11,116,255,0.18)}
+.btn-primary:hover, .btn-success:hover{ filter:brightness(0.98); transform:translateY(-1px); box-shadow:0 10px 20px rgba(11,116,255,0.22)}
+.btn-outline-secondary:hover{ background: rgba(11,116,255,0.06); color: var(--text) }
+.btn:focus{ outline:none; box-shadow: 0 0 0 0.2rem rgba(11,116,255,0.25) }
+.btn-outline-secondary{color:var(--muted);border-color:rgba(15,23,42,0.06)}
+.btn-theme{min-width:36px;border-radius:9px;padding:6px 10px}
+.btn-theme.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:0;box-shadow:0 6px 18px rgba(11,116,255,0.12)}
+
+/* table striping for readability */
+.table.table-dark{background:transparent}
+.table tbody tr:nth-child(odd){background:rgba(11,116,255,0.02)}
+
+/* Text helpers */
+.text-muted{color:var(--muted) !important}
+
+/* Theme variants via data-theme attribute on <html> */
+/* Dark theme only (light is default) */
+html[data-theme="dark"]{
+    --bg: #07101a;
+    --panel: #071226;
+    --muted: #9aa6b2;
+    --accent: #4ade80;
+    --accent-2: #06b6d4;
+    --card: #0b1428;
+    --card-border: rgba(255,255,255,0.04);
+    --text:#e6edf3;
+    color-scheme: dark;
+}
+
+/* Dark theme table header stickiness color */
+html[data-theme="dark"] .flights-table thead th{ background: rgba(7,18,38,0.95); }
+
+/* Dark theme outlines */
+html[data-theme="dark"] .btn-outline-secondary{ color: #c3ced9; border-color: rgba(230,237,243,0.18); }
+
+/* Smooth transitions for color changes */
+:root, body, .card, .navbar, .map, .right-panel, table { transition: background-color 260ms ease, color 260ms ease, border-color 260ms ease, box-shadow 260ms ease, transform 260ms ease; }
+
+@media (max-width:900px){.main-area{flex-direction:column}.right-panel{width:100%}.map{height:420px}}
+
+/* Enhanced header styling */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255,255,255,0.88));
+    border-bottom: 1px solid var(--card-border);
+    box-shadow: 0 8px 28px rgba(11,116,255,0.06);
+    margin-bottom: 0;
+}
+html[data-theme="dark"] .app-header {
+    background: linear-gradient(90deg, rgba(11,18,33,0.90), rgba(11,18,33,0.85));
+    box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+}
+.app-header .navbar-brand span { font-weight:700; letter-spacing:0.4px; }
+.app-header .navbar-brand i { filter:drop-shadow(0 4px 10px rgba(11,116,255,0.25)); }
+.app-header .nav-link { padding:8px 14px; font-size:0.85rem; }
+.app-header .nav-link.active { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color:#fff !important; box-shadow:0 4px 14px rgba(11,116,255,0.26); }
+.app-header .nav-link.active::after { display:none; }
+.app-header .nav-link:hover { background: rgba(11,116,255,0.08); color: var(--accent) !important; }
+.app-header .btn-theme { border:1px solid var(--card-border); }
+html[data-theme="dark"] .app-header .nav-link.active { box-shadow:0 4px 14px rgba(6,182,212,0.25); }
+@media (max-width:991px) {
+    .app-header { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .app-header .nav-link { padding:10px 12px; }
 }

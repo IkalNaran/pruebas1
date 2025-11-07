@@ -1,27 +1,82 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Zabbix Flights{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{% block title %}Zabbix Flights{% endblock %}</title>
+
+        <!-- Bootstrap CSS (CDN) -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="" crossorigin="anonymous">
+        <!-- Optional icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="" crossorigin="anonymous" />
+
+        <!-- Theme styles (override after Bootstrap) -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+        {% block head_extra %}{% endblock %}
+    
+        <style>
+        /* Small helper to ensure full-height background under Bootstrap container */
+        html,body{height:100%}
+        </style>
 </head>
-<body>
-    <header>
-        <h1>Zabbix Flights Dashboard</h1>
-        <nav>
-            <a href="/">Inicio</a> |
-            <a href="/flights">Vuelos</a> |
-            <a href="/monitoring">Monitoreo</a>
-        </nav>
-    </header>
+<body class="d-flex flex-column min-vh-100">
 
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    <nav class="navbar app-header navbar-expand-lg">
+            <div class="container-lg">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+            <i class="fa-solid fa-plane-departure me-2 text-primary"></i>
+                    <span>Zabbix Flights</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-    <footer>
-        <p>© 2025 Zabbix Flights</p>
-    </footer>
+                <div class="collapse navbar-collapse" id="mainNav">
+                                        <ul class="navbar-nav ms-auto">
+                                                <li class="nav-item">
+                                                    <a class="nav-link {{ 'active' if request.path == '/' else '' }}" href="/">
+                                                        <i class="fa-solid fa-house me-1"></i> Inicio
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link {{ 'active' if request.path.startswith('/flights') else '' }}" href="/flights">
+                                                        <i class="fa-solid fa-plane me-1"></i> Vuelos
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link {{ 'active' if request.path.startswith('/monitoring') else '' }}" href="/monitoring">
+                                                        <i class="fa-solid fa-gauge-high me-1"></i> Monitoreo
+                                                    </a>
+                                                </li>
+                                        </ul>
+                                        <div class="d-flex align-items-center ms-3">
+                                            <div class="me-2 d-none d-md-block text-muted small">Tema</div>
+                                            <div class="btn-group me-2" role="group" aria-label="Tema">
+                                                <button id="theme-light" class="btn btn-sm btn-outline-primary btn-theme" title="Claro"><i class="fa-solid fa-sun"></i></button>
+                                                <button id="theme-dark" class="btn btn-sm btn-outline-secondary btn-theme" title="Oscuro"><i class="fa-solid fa-moon"></i></button>
+                                            </div>
+                                        </div>
+                </div>
+            </div>
+    </nav>
+
+    <main class="container-lg my-4 flex-grow-1">
+                {% block content %}{% endblock %}
+        </main>
+
+        <footer class="py-3 border-top mt-auto">
+            <div class="container-lg d-flex justify-content-between align-items-center">
+                <small>© 2025 Zabbix Flights</small>
+                <small class="text-muted">TEAM TIBIOS</small>
+            </div>
+        </footer>
+
+        <!-- Bootstrap JS (CDN) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="" crossorigin="anonymous"></script>
+
+        <!-- Main frontend (local) -->
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        {% block body_extra %}{% endblock %}
 </body>
 </html>
