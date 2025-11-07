@@ -1,25 +1,54 @@
-from app import create_app
-from app.models import db, FlightSnapshot, SystemStatus
+from app.models import db, FlightSnapshot, SystemStatus, EventLog
+from sqlalchemy import text
 from datetime import datetime, timedelta
 
-app = create_app()
+MAX_FLIGHTS = 100
 
-with app.app_context():
+def cleanup_if_needed():
+    # 1. Contar vuelos actuales
+    count = FlightSnapshot.query.count()
 
-    # marcar estado activo
+    # Si no hemos excedido el límite, también hacemos limpieza por tiempo
+    if count <= MAX_FLIGHTS:
+        return {"action": "none"}
+
+    # 2. Marcar limpieza activa
     status = SystemStatus.query.filter_by(parameter="db_cleanup").first()
     status.value = "RUNNING"
     status.updated_at = datetime.utcnow()
     db.session.commit()
 
-    # borrar vuelos viejos
-    cutoff = datetime.utcnow() - timedelta(minutes=10)
-    FlightSnapshot.query.filter(FlightSnapshot.created_at < cutoff).delete()
+    # 3. Obtener los IDs más recientes que queremos conservar
+    ids_keep = db.session.execute(
+        text("""
+            SELECT id
+            FROM flight_snapshots
+            ORDER BY created_at DESC
+            LIMIT :max
+        """),
+        {"max": MAX_FLIGHTS}
+    ).fetchall()
+
+    ids_keep = [row[0] for row in ids_keep]
+
+    # 4. Eliminar todo lo que NO esté en los recientes
+    db.session.execute(
+        text("""
+            DELETE FROM flight_snapshots
+            WHERE id NOT IN :ids
+        """),
+        {"ids": tuple(ids_keep)}
+    )
+
     db.session.commit()
 
-    # marcar como terminado
+    # 5. Volver a estado normal
     status.value = "IDLE"
     status.updated_at = datetime.utcnow()
     db.session.commit()
 
-    print("✅ Limpieza ejecutada")
+    return {
+        "action": "cleanup",
+        "kept": len(ids_keep),
+        "removed": count - len(ids_keep)
+    }

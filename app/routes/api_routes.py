@@ -4,6 +4,7 @@ from app.models import SystemStatus
 from app.zabbix_client import update_system_status, log_event, send_telegram_alert
 from app import db, socketio    # usar Socket.IO para notificar al frontend
 from flask import current_app
+from scripts.cleanup import cleanup_if_needed
 import time
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -51,6 +52,17 @@ def get_opensky_data():
     # Update cache and return
     _last_snapshot = data
     _last_snapshot_ts = time.time()
+    cleanup_results = cleanup_if_needed()
+    if cleanup_results.get("cleaned"):
+        try:
+            socketio.emit(
+                "cleanup_status",
+                {"status": "ACTIVE", "total": cleanup_results["total"]},
+                namespace="/",
+                broadcast=True
+            )
+        except Exception:
+            pass    
     return jsonify(data)
 
 @api_bp.route('/zabbix/webhook', methods=['POST'])
