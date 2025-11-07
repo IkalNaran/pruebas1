@@ -82,9 +82,11 @@
         + '<path d="M0-10 L2 -2 L10 0 L2 2 L0 10 L-2 2 L-10 0 L-2 -2 Z" fill="#1f2937"/>'
         + '</g>'
         + '</svg>';
-      var html = '<div class="plane-div-icon" style="transform: rotate('+ (heading||0) +'deg);">'+svg+'</div>';
+      // outer div: posicionada por Leaflet. inner div (.plane-rot) se encarga solo de rotar el SVG.
+      var html = '<div class="plane-div-icon"><div class="plane-rot" style="display:inline-block; transform: rotate(' + (heading||0) + 'deg);">' + svg + '</div></div>';
       return L.divIcon({ className:'plane-div-icon', html: html, iconSize:[28,28], iconAnchor:[14,14] });
     }
+
 
     function inferFlightType(f){
       var cs = (f.callsign||'').trim().toUpperCase();
@@ -227,7 +229,25 @@
           }
           if(markers[id]){
             markers[id].setLatLng([d.lat, d.lon]);
-            var el = markers[id].getElement && markers[id].getElement(); if(el){ el.style.transform='rotate('+(d.heading||0)+'deg)'; el.style.opacity=d.estimated? '0.7':'1'; }
+            var el = markers[id].getElement && markers[id].getElement();
+            if(el){
+              // Actualizamos la rotación solo del elemento interno .plane-rot para no romper
+              // la transform (translate) que Leaflet usa para colocar el marker.
+              var rot = el.querySelector && el.querySelector('.plane-rot');
+              if(rot){
+                rot.style.transform = 'rotate(' + (d.heading || 0) + 'deg)';
+                // Si quieres ajustar opacidad global, mejor tocar el contenedor:
+                el.style.opacity = d.estimated ? '0.7' : '1';
+              } else {
+                // Fallback: si no hay .plane-rot, concatena rotate con la transform existente
+                var prev = el.style.transform || '';
+                // elimina cualquier rotate previa
+                prev = prev.replace(/rotate\([^)]*\)/g, '');
+                el.style.transform = (prev + ' rotate(' + (d.heading || 0) + 'deg)').trim();
+                el.style.opacity = d.estimated ? '0.7' : '1';
+              }
+            }
+
             markers[id].bindPopup && markers[id].bindPopup('<b>'+ (d.callsign||id) +'</b><br>Alt: '+(d.altitude||'—'));
           } else {
             var icon = createPlaneIcon(d.heading||0);
@@ -341,9 +361,30 @@
       socket.on('flight_update', function(d){ try{
         var id=d.icao24; if(!id) return; d.type = d.type || inferFlightType(d); currentFlights[id]=d;
         if(map){
-          if(markers[id]){ markers[id].setLatLng([d.lat,d.lon]); var el=markers[id].getElement&&markers[id].getElement(); if(el){ el.style.transform='rotate('+(d.heading||0)+'deg)'; el.style.opacity=d.estimated?'0.7':'1'; } }
-          else { var icon=createPlaneIcon(d.heading||0); var m = icon? L.marker([d.lat,d.lon],{icon}) : L.marker([d.lat,d.lon]); m.addTo(map); m.bindPopup && m.bindPopup('<b>'+ (d.callsign||id) +'</b><br>Alt: '+(d.altitude||'—')); markers[id]=m; }
+          if(markers[id]){
+            markers[id].setLatLng([d.lat, d.lon]);
+            var el = markers[id].getElement && markers[id].getElement();
+            if(el){
+              var rot = el.querySelector && el.querySelector('.plane-rot');
+              if(rot){
+                rot.style.transform = 'rotate(' + (d.heading || 0) + 'deg)';
+                el.style.opacity = d.estimated ? '0.7' : '1';
+              } else {
+                var prev = el.style.transform || '';
+                prev = prev.replace(/rotate\([^)]*\)/g, '');
+                el.style.transform = (prev + ' rotate(' + (d.heading || 0) + 'deg)').trim();
+                el.style.opacity = d.estimated ? '0.7' : '1';
+              }
+            }
+          } else {
+            var icon = createPlaneIcon(d.heading || 0);
+            var m = icon ? L.marker([d.lat, d.lon], { icon }) : L.marker([d.lat, d.lon]);
+            m.addTo(map);
+            m.bindPopup && m.bindPopup('<b>' + (d.callsign || id) + '</b><br>Alt: ' + (d.altitude || '—'));
+            markers[id] = m;
+          }
         }
+
         // En la página de vuelos NO re-renderizamos la tabla con updates individuales del socket.
         if(!isFlightsPage()){ applyFiltersToMarkers(); }
       }catch(e){} });
