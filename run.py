@@ -6,4 +6,4 @@ app = create_app()
 if __name__ == "__main__":
     # Run using Socket.IO so background tasks and websocket transport work
     port = int(os.environ.get('PORT', '5001'))
-    socketio.run(app, debug=True, port=port)
+    socketio.run(app, host='0.0.0.0', port=5000 ,debug=True)
